@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+[data-draggable-event] {
+  user-select: none;
+}
+
+@media (pointer: coarse) {
+  .touch-none {
+    touch-action: none;
+  }
+}

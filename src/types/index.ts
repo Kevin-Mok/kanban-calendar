@@ -1,4 +1,5 @@
-export interface Event {
+console.log('Types module loaded');
+interface Event {
   id: string;
   title: string;
   description: string;
@@ -6,6 +7,8 @@ export interface Event {
   time: string;
 }
 
-export interface EventsByDate {
+interface EventsByDate {
   [date: string]: Event[];
 }
+
+export default { Event, EventsByDate };

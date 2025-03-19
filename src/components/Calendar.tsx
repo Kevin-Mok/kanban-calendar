@@ -4,11 +4,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { dropTargetForElements, monitorForElements, draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
-import { format, addDays, startOfWeek, differenceInDays } from 'date-fns';
+import { format, addDays, startOfWeek, differenceInDays, parseISO } from 'date-fns';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import EventModal from '@/components/EventModal';
 import eventsData from '@/data/events';
-import { Event, EventsByDate } from '@/types';
+//import { Event, EventsByDate } from '@/types';
+import types from '@/types';
+
+type Event = types.Event;
+type EventsByDate = types.EventsByDate;
 
 const Calendar = () => {
   const { width } = useWindowSize();
@@ -22,6 +26,16 @@ const Calendar = () => {
   const [activeDay, setActiveDay] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<EventsByDate>(eventsData);
+
+  const eventsRef = useRef(eventsData);
+  eventsRef.current = events;
+
+  useEffect(() => {
+    document.body.style.touchAction = 'manipulation';
+    return () => {
+      document.body.style.touchAction = '';
+    };
+  }, []);
 
   const getWeekDays = (date: Date) => {
     const start = startOfWeek(date);
@@ -53,39 +67,51 @@ const Calendar = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePreviousWeek, handleNextWeek, selectedEvent]);
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = useCallback((event: any) => {
     const { source, location } = event;
     if (!location?.current?.dropTargets[0]) return;
 
     const dropTarget = location.current.dropTargets[0].data;
-    const movedEvent = Object.values(events)
+    const movedEvent = Object.values(eventsRef.current)
       .flat()
       .find(e => e.id === source.data.id);
 
     if (movedEvent) {
-      const newEvents = { ...events };
+      const newEvents = { ...eventsRef.current };
       const sourceDate = source.data.date;
       const targetDate = dropTarget.date;
 
-      // Remove from source date
-      newEvents[sourceDate] = newEvents[sourceDate].filter(e => e.id !== movedEvent.id);
-      // Add to target date
-      newEvents[targetDate] = [...(newEvents[targetDate] || []), movedEvent];
+      // Update the event's date when moving between weeks
+      const updatedEvent = { ...movedEvent, date: targetDate };
+
+      newEvents[sourceDate] = (newEvents[sourceDate] || []).filter(e => e.id !== movedEvent.id);
+      newEvents[targetDate] = [...(newEvents[targetDate] || []), updatedEvent];
 
       setEvents(newEvents);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const cleanup = monitorForElements({
       onDrop: handleDragEnd,
     });
     return () => cleanup();
-  }, [events]);
+  }, [handleDragEnd]);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => handleSwipe('left'),
-    onSwipedRight: () => handleSwipe('right'),
+    onSwipedLeft: (e) => {
+      if (!e.event.target?.closest?.('[data-draggable-event]')) {
+        setActiveDay(prev => Math.min(6, prev + 1));
+      }
+    },
+    onSwipedRight: (e) => {
+      if (!e.event.target?.closest?.('[data-draggable-event]')) {
+        setActiveDay(prev => Math.max(0, prev - 1));
+      }
+    },
+    trackTouch: true,
+    delta: 50, // Minimum swipe distance
+    preventScrollOnSwipe: true
   });
 
   const handleSwipe = (dir: 'left' | 'right') => {
@@ -131,6 +157,7 @@ const Calendar = () => {
 };
 
 const DayColumn = ({ date, events, index, activeDay, onEventClick }: any) => {
+  const columnRef = useRef<HTMLDivElement>(null);
   const { width } = useWindowSize();
   const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
 
@@ -141,21 +168,62 @@ const DayColumn = ({ date, events, index, activeDay, onEventClick }: any) => {
   const dayOffset = differenceInDays(date, startOfWeek(date));
   const isActive = isMobile ? activeDay === dayOffset : true;
 
+  //useEffect(() => {
+    //const element = document.querySelector(`[data-day="${dayOffset}"]`);
+    //if (!element) return;
+
+    //return dropTargetForElements({
+      //element,
+      //getData: () => ({ date: format(date, 'yyyy-MM-dd') }),
+    //});
+  //}, [date, dayOffset]);
+
+  //return (
+    //<motion.div
+      //className={`flex-1 ${isMobile ? 'min-w-[90vw]' : ''}`}
+      //data-day={dayOffset}
+      //style={{ transform: `translateX(-${activeDay * 100}%)` }}
+      //animate={{ x: isMobile ? -activeDay * 100 + '%' : 0 }}
+      //transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    //>
+      //<div className="h-full bg-gray-50 rounded-lg p-2">
+        //<div className="font-bold mb-2">
+          //{format(date, 'EEE, MMM d')}
+        //</div>
+        //{events.map((event: Event) => (
+          //<DraggableEvent
+            //key={event.id}
+            //event={event}
+            //date={format(date, 'yyyy-MM-dd')}
+            //onEventClick={onEventClick}
+          ///>
+        //))}
+      //</div>
+    //</motion.div>
+  //);
+
   useEffect(() => {
-    const element = document.querySelector(`[data-day="${dayOffset}"]`);
+    const element = columnRef.current;
     if (!element) return;
 
-    return dropTargetForElements({
+    const cleanup = dropTargetForElements({
       element,
       getData: () => ({ date: format(date, 'yyyy-MM-dd') }),
     });
-  }, [date, dayOffset]);
+
+    return cleanup;
+  }, [date, activeDay]); // Add activeDay to dependencies
 
   return (
     <motion.div
+      ref={columnRef}
       className={`flex-1 ${isMobile ? 'min-w-[90vw]' : ''}`}
       data-day={dayOffset}
-      style={{ transform: `translateX(-${activeDay * 100}%)` }}
+      style={{ 
+        transform: `translateX(-${activeDay * 100}%)`,
+        // Ensure all columns are rendered in DOM for desktop
+        display: isMobile ? undefined : 'block'
+      }}
       animate={{ x: isMobile ? -activeDay * 100 + '%' : 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
@@ -186,6 +254,21 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
     return draggable({
       element,
       getInitialData: () => ({ id: event.id, date }),
+      onDragStart: () => {
+        element.style.zIndex = '9999';
+        element.style.transform = 'scale(1.05)';
+        element.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
+      },
+      onDrop: ({ location }) => {
+        element.style.zIndex = '';
+        element.style.transform = '';
+        element.style.boxShadow = '';
+        
+        // Force reflow to ensure drop targets update
+        if (!location?.current?.dropTargets[0]) {
+          window.dispatchEvent(new Event('resize'));
+        }
+      }
     });
   }, [event.id, date]);
 
@@ -194,7 +277,11 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
       ref={ref}
       layoutId={event.id}
       onClick={() => onEventClick(event)}
-      className="bg-white p-4 rounded shadow mb-2"
+      className="bg-white p-4 rounded shadow mb-2 select-none"
+      style={{
+        touchAction: 'none',
+        cursor: 'grab',
+      }}
     >
       <h3 className="font-medium">{event.title}</h3>
       <p className="text-sm text-gray-500">{event.time}</p>
