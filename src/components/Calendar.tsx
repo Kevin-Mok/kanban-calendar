@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { dropTargetForElements, monitorForElements, draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
@@ -27,6 +27,31 @@ const Calendar = () => {
     const start = startOfWeek(date);
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   };
+
+  const handlePreviousWeek = useCallback(() => {
+    setCurrentDate(prev => addDays(prev, -7));
+  }, []);
+
+  const handleNextWeek = useCallback(() => {
+    setCurrentDate(prev => addDays(prev, 7));
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (selectedEvent) return; // Ignore if modal is open
+      
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        handlePreviousWeek();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        handleNextWeek();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePreviousWeek, handleNextWeek, selectedEvent]);
 
   const handleDragEnd = (event: any) => {
     const { source, location } = event;
@@ -177,7 +202,17 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
   );
 };
 
-const Header = ({ currentDate, activeDay }: { currentDate: Date; activeDay: number }) => {
+const Header = ({ 
+  currentDate, 
+  activeDay,
+  onPreviousWeek,
+  onNextWeek
+}: { 
+  currentDate: Date; 
+  activeDay: number;
+  onPreviousWeek: () => void;
+  onNextWeek: () => void;
+}) => {
   const { width } = useWindowSize();
   const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
 
@@ -194,9 +229,9 @@ const Header = ({ currentDate, activeDay }: { currentDate: Date; activeDay: numb
           </h2>
         ) : (
           <div className="flex gap-4">
-            <button>Previous Week</button>
+            <button onClick={onPreviousWeek}>Previous Week</button>
             <h2>{format(currentDate, 'MMMM yyyy')}</h2>
-            <button>Next Week</button>
+            <button onClick={onNextWeek}>Next Week</button>
           </div>
         )}
       </div>
