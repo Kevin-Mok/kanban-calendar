@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { useState, useEffect, useRef } from 'react';
+import { dropTargetForElements, monitorForElements, draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import { format, addDays, startOfWeek, differenceInDays } from 'date-fns';
@@ -12,7 +12,12 @@ import { Event, EventsByDate } from '@/types';
 
 const Calendar = () => {
   const { width } = useWindowSize();
-  const isMobile = width < 768;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(width < 768); // Update isMobile after hydration
+  }, [width]);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeDay, setActiveDay] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -100,7 +105,14 @@ const Calendar = () => {
   );
 };
 
-const DayColumn = ({ date, events, isMobile, index, activeDay, onEventClick }: any) => {
+const DayColumn = ({ date, events, index, activeDay, onEventClick }: any) => {
+  const { width } = useWindowSize();
+  const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
+
+  useEffect(() => {
+    setIsMobile(width < 768); // Update isMobile after hydration
+  }, [width]);
+
   const dayOffset = differenceInDays(date, startOfWeek(date));
   const isActive = isMobile ? activeDay === dayOffset : true;
 
@@ -165,22 +177,31 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
   );
 };
 
-const Header = ({ currentDate, isMobile, activeDay }: any) => (
-  <div className="p-4 border-b">
-    <div className="flex items-center justify-between">
-      {isMobile ? (
-        <h2 className="text-xl font-bold">
-          {format(addDays(startOfWeek(currentDate), activeDay), 'MMMM yyyy')}
-        </h2>
-      ) : (
-        <div className="flex gap-4">
-          <button>Previous Week</button>
-          <h2>{format(currentDate, 'MMMM yyyy')}</h2>
-          <button>Next Week</button>
-        </div>
-      )}
+const Header = ({ currentDate, activeDay }: { currentDate: Date; activeDay: number }) => {
+  const { width } = useWindowSize();
+  const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
+
+  useEffect(() => {
+    setIsMobile(width < 768); // Update isMobile after hydration
+  }, [width]);
+
+  return (
+    <div className="p-4 border-b">
+      <div className="flex items-center justify-between">
+        {isMobile ? (
+          <h2 className="text-xl font-bold">
+            {format(addDays(startOfWeek(currentDate), activeDay), 'MMMM yyyy')}
+          </h2>
+        ) : (
+          <div className="flex gap-4">
+            <button>Previous Week</button>
+            <h2>{format(currentDate, 'MMMM yyyy')}</h2>
+            <button>Next Week</button>
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Calendar;
