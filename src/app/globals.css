@@ -34,3 +34,11 @@ body {
     touch-action: none;
   }
 }
+
+.draggable-event {
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.drag-preview {
+  transition: opacity 0.2s ease;
+}
