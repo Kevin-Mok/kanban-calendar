@@ -22,6 +22,7 @@ import { Event, EventsByDate } from '@/types';
 const Calendar = () => {
   const { width } = useWindowSize();
   const [isMobile, setIsMobile] = useState(false);
+  const [direction, setDirection] = useState<'left' | 'right'>('left');
 
   useEffect(() => {
     setIsMobile(width < 768); // Update isMobile after hydration
@@ -42,7 +43,7 @@ const Calendar = () => {
     const dropTarget = location.current.dropTargets[0].data;
     const movedEvent = Object.values(eventsRef.current)
       .flat()
-      .find(e => e.id === source.data.id);
+      .find((e: Event) => e.id === source.data.id);
 
     if (movedEvent) {
       const newEvents = { ...eventsRef.current };
@@ -77,7 +78,7 @@ const Calendar = () => {
         if (dropTarget?.date) {
           const movedEvent = Object.values(events)
             .flat()
-            .find(e => e.id === source.data.id);
+            .find((e: Event) => e.id === source.data.id);
           
           if (movedEvent) {
             setDragPreview({
@@ -142,9 +143,10 @@ const Calendar = () => {
     return () => cleanup();
   }, [handleDragEnd]);
 
-  const handleSwipe = (direction: 'left' | 'right') => {
+  const handleSwipe = (dir: 'left' | 'right') => {
     if (isMobile) {
-      setCurrentDate(prev => direction === 'left' ? addDays(prev, 1) : addDays(prev, -1));
+      setDirection(dir);
+      setCurrentDate(prev => dir === 'left' ? addDays(prev, 1) : addDays(prev, -1));
     }
   };
 
@@ -160,15 +162,25 @@ const Calendar = () => {
       <div {...swipeHandlers} className="flex-1 overflow-hidden">
         <div className={`flex ${!isMobile && 'gap-4'} h-full p-4`}>
           {isMobile ? (
-            <DayColumn
-              key={currentDate.toISOString()}
-              date={currentDate}
-              events={events[format(currentDate, 'yyyy-MM-dd')] || []}
-              isMobile={isMobile}
-              index={0}
-              onEventClick={setSelectedEvent}
-              dragPreview={dragPreview?.targetDate === format(currentDate, 'yyyy-MM-dd') ? dragPreview.event : null}
-            />
+            <AnimatePresence mode='wait'>
+              <motion.div
+                key={currentDate.toISOString()}
+                initial={{ x: direction === 'left' ? 300 : -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: direction === 'left' ? -300 : 300, opacity: 0 }}
+                transition={{ type: 'tween', duration: 0.3 }}
+                className="w-full h-full"
+              >
+                <DayColumn
+                  date={currentDate}
+                  events={events[format(currentDate, 'yyyy-MM-dd')] || []}
+                  isMobile={isMobile}
+                  index={0}
+                  onEventClick={setSelectedEvent}
+                  dragPreview={dragPreview?.targetDate === format(currentDate, 'yyyy-MM-dd') ? dragPreview.event : null}
+                />
+              </motion.div>
+            </AnimatePresence>
           ) : (
             getWeekDays(currentDate).map((date, index) => (
               <DayColumn
@@ -360,7 +372,7 @@ const Header = ({
   return (
     <div className="p-4 border-b">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">
+        <h2 className="text-xl font-bold text-black">
           {format(currentDate, 'MMMM yyyy')}
         </h2>
       </div>
