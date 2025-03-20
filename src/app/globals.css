@@ -35,10 +35,28 @@ body {
   }
 }
 
+[data-day] {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
 .draggable-event {
+  touch-action: none;
+  user-select: none;
+}
+
+.day-column {
+  position: relative;
+  contain: layout paint style;
+}
+
+.draggable-event {
+  position: relative;
+  z-index: 1;
   transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 .drag-preview {
+  z-index: 0 !important;
   transition: opacity 0.2s ease;
 }

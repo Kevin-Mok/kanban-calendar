@@ -66,8 +66,8 @@ const Calendar = () => {
     const cleanup = monitorForElements({
       onDrop: handleDragEnd,
       onDrag: ({ source, location }) => {
-        //console.log('Drag source:', source);
-        //console.log('Drag location:', location);
+        console.log('Drag source data:', source?.data);
+        console.log('Current drop targets:', location?.current?.dropTargets);
 
         if (!source?.data) {
           console.warn('No drag data found. Source:', source);
@@ -145,6 +145,11 @@ const Calendar = () => {
   }, [handleDragEnd]);
 
   const swipeHandlers = useSwipeable({
+    onSwiped: (e) => {
+      if (e.event.type === 'touchmove') {
+        e.event.preventDefault();
+      }
+    },
     onSwipedLeft: (e) => {
       if (!e.event.target?.closest?.('[data-draggable-event]')) {
         setActiveDay(prev => Math.min(6, prev + 1));
@@ -156,6 +161,7 @@ const Calendar = () => {
       }
     },
     trackTouch: true,
+    trackMouse: false,
     delta: 50, // Minimum swipe distance
     preventScrollOnSwipe: true
   });
@@ -226,6 +232,18 @@ const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumn
   const dayOffset = differenceInDays(date, startOfWeek(date));
   const isActive = isMobile ? activeDay === dayOffset : true;
 
+  //useEffect(() => {
+    //const element = columnRef.current;
+    //if (!element) return;
+
+    //const cleanup = dropTargetForElements({
+      //element,
+      //getData: () => ({ date: format(date, 'yyyy-MM-dd') }),
+    //});
+
+    //return cleanup;
+  //}, [date, activeDay]);
+  //}, [date, dayOffset]);
   useEffect(() => {
     const element = columnRef.current;
     if (!element) return;
@@ -236,50 +254,48 @@ const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumn
     });
 
     return cleanup;
-  }, [date, activeDay]);
-  //}, [date, dayOffset]);
+  }, [date]);
 
   return (
     <motion.div
       ref={columnRef}
       className={`flex-1 ${isMobile ? 'min-w-[90vw]' : ''}`}
       data-day={dayOffset}
-      style={{ 
-        transform: `translateX(-${activeDay * 100}%)`,
-        // Ensure all columns are rendered in DOM for desktop
-        display: isMobile ? undefined : 'block'
-      }}
-      animate={{ x: isMobile ? -activeDay * 100 + '%' : 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      style={{ transform: `translateX(-${props.activeDay * 100}%)` }}
+      animate={{ x: isMobile ? -props.activeDay * 100 + '%' : 0 }}
     >
-      <div className="h-full bg-gray-50 rounded-lg p-2">
-        <div className="font-bold mb-2">
-          {format(date, 'EEE, MMM d')}
-        </div>
-        {/* Preview element */}
+      {/* Add relative positioning container */}
+      <div className="h-full relative">
+        {/* Preview container */}
         {dragPreview && (
-          <div className="absolute inset-0 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              className="bg-blue-100 p-4 rounded shadow mb-2 m-2 border-2 border-blue-300"
-            >
+          <motion.div
+            className="drag-preview"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 0.4, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="bg-blue-100 p-4 rounded shadow mb-2 mx-2 border-2 border-blue-300">
               <h3 className="font-medium">{dragPreview.title}</h3>
               <p className="text-sm text-gray-500">{dragPreview.time}</p>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Real events */}
-        <div className="relative z-10">
-          {events.map((event: Event) => (
-            <DraggableEvent
-              key={event.id}
-              event={event}
-              date={format(date, 'yyyy-MM-dd')}
-              onEventClick={props.onEventClick}
-            />
-          ))}
+        <div className="relative z-10 h-full">
+          <div className="bg-gray-50 rounded-lg p-2 h-full">
+            <div className="font-bold mb-2">
+              {format(date, 'EEE, MMM d')}
+            </div>
+            {events.map((event: Event) => (
+              <DraggableEvent
+                key={event.id}
+                event={event}
+                date={format(date, 'yyyy-MM-dd')}
+                onEventClick={props.onEventClick}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
