@@ -9,21 +9,15 @@ import {
 import { 
   dropTargetForElements,
   monitorForElements,
-  draggable,
-  attachClosestEdge,
-  getClosestEdge
+  draggable
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSwipeable } from 'react-swipeable';
+import { useSwipe } from '@/hooks/useSwipe';
 import { format, addDays, startOfWeek, differenceInDays, parseISO } from 'date-fns';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import EventModal from '@/components/EventModal';
 import eventsData from '@/data/events';
-//import { Event, EventsByDate } from '@/types';
-import types from '@/types';
-
-type Event = types.Event;
-type EventsByDate = types.EventsByDate;
+import { Event, EventsByDate } from '@/types';
 
 const Calendar = () => {
   const { width } = useWindowSize();
@@ -34,7 +28,6 @@ const Calendar = () => {
   }, [width]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeDay, setActiveDay] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<EventsByDate>(eventsData);
   const [dragPreview, setDragPreview] = useState<{
@@ -149,56 +142,46 @@ const Calendar = () => {
     return () => cleanup();
   }, [handleDragEnd]);
 
-  const swipeHandlers = useSwipeable({
-    onSwiped: (e) => {
-      if (e.event.type === 'touchmove') {
-        e.event.preventDefault();
-      }
-    },
-    onSwipedLeft: (e) => {
-      if (!e.event.target?.closest?.('[data-draggable-event]')) {
-        setActiveDay(prev => Math.min(6, prev + 1));
-      }
-    },
-    onSwipedRight: (e) => {
-      if (!e.event.target?.closest?.('[data-draggable-event]')) {
-        setActiveDay(prev => Math.max(0, prev - 1));
-      }
-    },
-    trackTouch: true,
-    trackMouse: false,
-    delta: 50, // Minimum swipe distance
-    preventScrollOnSwipe: true
-  });
-
-  const handleSwipe = (dir: 'left' | 'right') => {
+  const handleSwipe = (direction: 'left' | 'right') => {
     if (isMobile) {
-      setActiveDay(prev => dir === 'left' ? prev + 1 : prev - 1);
+      setCurrentDate(prev => direction === 'left' ? addDays(prev, 1) : addDays(prev, -1));
     }
   };
+
+  const swipeHandlers = useSwipe(handleSwipe);
 
   return (
     <div className="h-screen flex flex-col">
       <Header 
         currentDate={currentDate} 
         isMobile={isMobile} 
-        activeDay={activeDay}
       />
       
       <div {...swipeHandlers} className="flex-1 overflow-hidden">
         <div className={`flex ${!isMobile && 'gap-4'} h-full p-4`}>
-          {getWeekDays(currentDate).map((date, index) => (
+          {isMobile ? (
             <DayColumn
-              key={date.toISOString()}
-              date={date}
-              events={events[format(date, 'yyyy-MM-dd')] || []}
+              key={currentDate.toISOString()}
+              date={currentDate}
+              events={events[format(currentDate, 'yyyy-MM-dd')] || []}
               isMobile={isMobile}
-              index={index}
-              activeDay={activeDay}
+              index={0}
               onEventClick={setSelectedEvent}
-              dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
+              dragPreview={dragPreview?.targetDate === format(currentDate, 'yyyy-MM-dd') ? dragPreview.event : null}
             />
-          ))}
+          ) : (
+            getWeekDays(currentDate).map((date, index) => (
+              <DayColumn
+                key={date.toISOString()}
+                date={date}
+                events={events[format(date, 'yyyy-MM-dd')] || []}
+                isMobile={isMobile}
+                index={index}
+                onEventClick={setSelectedEvent}
+                dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
+              />
+            ))
+          )}
         </div>
       </div>
 
@@ -219,7 +202,6 @@ interface DayColumnProps {
   events: Event[];
   isMobile: boolean;
   index: number;
-  activeDay: number;
   onEventClick: (event: Event) => void;
   dragPreview: Event | null;
 }
@@ -236,7 +218,7 @@ const PreviewComponent = ({ event }: { event: Event }) => (
   </motion.div>
 );
 
-const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumnProps) => {
+const DayColumn = ({ date, events, dragPreview, ...props }: DayColumnProps) => {
   const columnRef = useRef<HTMLDivElement>(null);
   const { width } = useWindowSize();
   const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
@@ -268,7 +250,7 @@ const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumn
   }, [width]);
 
   const dayOffset = differenceInDays(date, startOfWeek(date));
-  const isActive = isMobile ? activeDay === dayOffset : true;
+  const isActive = isMobile ? true : true;
 
   useEffect(() => {
     const element = columnRef.current;
@@ -370,36 +352,17 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
 
 const Header = ({ 
   currentDate, 
-  activeDay,
-  onPreviousWeek,
-  onNextWeek
+  isMobile
 }: { 
   currentDate: Date; 
-  activeDay: number;
-  onPreviousWeek: () => void;
-  onNextWeek: () => void;
+  isMobile: boolean;
 }) => {
-  const { width } = useWindowSize();
-  const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
-
-  useEffect(() => {
-    setIsMobile(width < 768); // Update isMobile after hydration
-  }, [width]);
-
   return (
     <div className="p-4 border-b">
       <div className="flex items-center justify-between">
-        {isMobile ? (
-          <h2 className="text-xl font-bold">
-            {format(addDays(startOfWeek(currentDate), activeDay), 'MMMM yyyy')}
-          </h2>
-        ) : (
-          <div className="flex gap-4">
-            <button onClick={onPreviousWeek}>Previous Week</button>
-            <h2>{format(currentDate, 'MMMM yyyy')}</h2>
-            <button onClick={onNextWeek}>Next Week</button>
-          </div>
-        )}
+        <h2 className="text-xl font-bold">
+          {format(currentDate, 'MMMM yyyy')}
+        </h2>
       </div>
     </div>
   );
