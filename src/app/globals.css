@@ -60,3 +60,13 @@ body {
   z-index: 0 !important;
   transition: opacity 0.2s ease;
 }
+
+.event-item {
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.preview-item {
+  margin: 2px 0;
+  transform-origin: top center;
+}

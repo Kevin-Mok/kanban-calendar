@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { 
+  useState, 
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo } from 'react';
 import { 
   dropTargetForElements,
   monitorForElements,
@@ -219,11 +224,44 @@ interface DayColumnProps {
   dragPreview: Event | null;
 }
 
-//const DayColumn = ({ date, events, index, activeDay, onEventClick }: any) => {
+const PreviewComponent = ({ event }: { event: Event }) => (
+  <motion.div
+    className="bg-blue-100 p-4 rounded shadow mb-2 mx-1 border-2 border-blue-300  pointer-events-none"
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 0.4, scale: 1 }}
+    exit={{ opacity: 0 }}
+  >
+    <h3 className="font-medium">{event.title}</h3>
+    <p className="text-sm text-gray-500">{event.time}</p>
+  </motion.div>
+);
+
 const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumnProps) => {
   const columnRef = useRef<HTMLDivElement>(null);
   const { width } = useWindowSize();
   const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
+
+  const parseTimeToMinutes = (time: string) => {
+    const [timePart, modifier] = time.split(' ');
+    let [hours, minutes] = timePart.split(':').map(Number);
+
+    if (modifier === 'PM' && hours !== 12) {
+      hours += 12; // Convert PM times to 24-hour format
+    }
+    if (modifier === 'AM' && hours === 12) {
+      hours = 0; // Handle midnight (12:00 AM)
+    }
+
+    return hours * 60 + minutes;
+  };
+
+  const sortedEvents = useMemo(() => 
+    [...events].sort((a, b) => 
+      parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time)
+    ),
+    [events]
+  );
+
 
   useEffect(() => {
     setIsMobile(width < 768); // Update isMobile after hydration
@@ -232,18 +270,6 @@ const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumn
   const dayOffset = differenceInDays(date, startOfWeek(date));
   const isActive = isMobile ? activeDay === dayOffset : true;
 
-  //useEffect(() => {
-    //const element = columnRef.current;
-    //if (!element) return;
-
-    //const cleanup = dropTargetForElements({
-      //element,
-      //getData: () => ({ date: format(date, 'yyyy-MM-dd') }),
-    //});
-
-    //return cleanup;
-  //}, [date, activeDay]);
-  //}, [date, dayOffset]);
   useEffect(() => {
     const element = columnRef.current;
     if (!element) return;
@@ -256,46 +282,50 @@ const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumn
     return cleanup;
   }, [date]);
 
+  const previewPosition = useMemo(() => {
+    if (!dragPreview) return -1;
+    
+    const previewMinutes = parseTimeToMinutes(dragPreview.time);
+    
+    return sortedEvents.findIndex(event => {
+      const eventMinutes = parseTimeToMinutes(event.time);
+      return eventMinutes >= previewMinutes;
+    });
+  }, [sortedEvents, dragPreview]);
+
   return (
     <motion.div
       ref={columnRef}
       className={`flex-1 ${isMobile ? 'min-w-[90vw]' : ''}`}
       data-day={dayOffset}
-      style={{ transform: `translateX(-${props.activeDay * 100}%)` }}
-      animate={{ x: isMobile ? -props.activeDay * 100 + '%' : 0 }}
     >
-      {/* Add relative positioning container */}
-      <div className="h-full relative">
-        {/* Preview container */}
-        {dragPreview && (
-          <motion.div
-            className="drag-preview"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 0.4, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="bg-blue-100 p-4 rounded shadow mb-2 mx-2 border-2 border-blue-300">
-              <h3 className="font-medium">{dragPreview.title}</h3>
-              <p className="text-sm text-gray-500">{dragPreview.time}</p>
-            </div>
-          </motion.div>
-        )}
+      <div className="h-full bg-gray-50 rounded-lg p-2 relative">
+        <div className="font-bold mb-2">
+          {format(date, 'EEE, MMM d')}
+        </div>
 
-        {/* Real events */}
-        <div className="relative z-10 h-full">
-          <div className="bg-gray-50 rounded-lg p-2 h-full">
-            <div className="font-bold mb-2">
-              {format(date, 'EEE, MMM d')}
-            </div>
-            {events.map((event: Event) => (
+        <div className="relative z-10">
+          {sortedEvents.map((event, index) => (
+            <div key={event.id}>
+              {/* Insert preview before the event at calculated position */}
+              {dragPreview?.id === event.id && (
+                <PreviewComponent event={dragPreview} />
+              )}
+              {previewPosition === index && (
+                <PreviewComponent event={dragPreview} />
+              )}
               <DraggableEvent
-                key={event.id}
                 event={event}
                 date={format(date, 'yyyy-MM-dd')}
                 onEventClick={props.onEventClick}
               />
-            ))}
-          </div>
+            </div>
+          ))}
+          
+          {/* Add preview at end if needed */}
+          {(previewPosition === sortedEvents.length || previewPosition === -1) && dragPreview && (
+            <PreviewComponent event={dragPreview} />
+          )}
         </div>
       </div>
     </motion.div>
