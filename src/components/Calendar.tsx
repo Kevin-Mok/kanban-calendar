@@ -65,12 +65,21 @@ const Calendar = () => {
   useEffect(() => {
     const cleanup = monitorForElements({
       onDrop: handleDragEnd,
-      onDrag: ({ location }) => {
+      onDrag: ({ source, location }) => {
+        //console.log('Drag source:', source);
+        //console.log('Drag location:', location);
+
+        if (!source?.data) {
+          console.warn('No drag data found. Source:', source);
+          setDragPreview(null);
+          return;
+        }
+
         const dropTarget = location?.current?.dropTargets[0]?.data;
         if (dropTarget?.date) {
           const movedEvent = Object.values(events)
             .flat()
-            .find(e => e.id === location?.initial.data.id);
+            .find(e => e.id === source.data.id);
           
           if (movedEvent) {
             setDragPreview({
@@ -79,10 +88,11 @@ const Calendar = () => {
             });
           }
         } else {
-          setDragPreview(null); // Clear preview if not over a valid drop target
+          setDragPreview(null);
         }
       }
     });
+
     return () => cleanup();
   }, [events, handleDragEnd]);
 
@@ -156,28 +166,6 @@ const Calendar = () => {
     }
   };
 
-  useEffect(() => {
-    const cleanup = monitorForElements({
-      onDrop: handleDragEnd,
-      onDrag: ({ location }) => {
-        const dropTarget = location?.current?.dropTargets[0]?.data;
-        if (dropTarget?.date) {
-          const movedEvent = Object.values(events)
-            .flat()
-            .find(e => e.id === location?.initial.data.id);
-          
-          if (movedEvent) {
-            setDragPreview({
-              event: movedEvent,
-              targetDate: dropTarget.date
-            });
-          }
-        }
-      }
-    });
-    return () => cleanup();
-  }, [events, handleDragEnd]);
-
   return (
     <div className="h-screen flex flex-col">
       <Header 
@@ -249,6 +237,7 @@ const DayColumn = ({ date, events, activeDay, dragPreview, ...props }: DayColumn
 
     return cleanup;
   }, [date, activeDay]);
+  //}, [date, dayOffset]);
 
   return (
     <motion.div
@@ -310,6 +299,7 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
       onDragStart: () => {
         element.style.opacity = '0.5';
         element.style.transform = 'scale(0.98)';
+        console.log('Drag started with data:', { id: event.id, date });
       },
       onDrop: () => {
         element.style.opacity = '';
