@@ -21,20 +21,25 @@ import { Event, EventsByDate } from '@/types';
 
 const Calendar = () => {
   const { width } = useWindowSize();
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [tempDate, setTempDate] = useState<Date | null>(null);
   const [direction, setDirection] = useState<'left' | 'right'>('left');
 
-  useEffect(() => {
-    setIsMobile(width < 768); // Update isMobile after hydration
-  }, [width]);
+  const [currentDate, setCurrentDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  });
 
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<EventsByDate>(eventsData);
   const [dragPreview, setDragPreview] = useState<{
     event: Event;
     targetDate: string;
   } | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleDragEnd = useCallback((event: any) => {
     const { source, location } = event;
@@ -53,7 +58,7 @@ const Calendar = () => {
       // Update the event's date when moving between weeks
       const updatedEvent = { ...movedEvent, date: targetDate };
 
-      newEvents[sourceDate] = (newEvents[sourceDate] || []).filter(e => e.id !== movedEvent.id);
+      newEvents[sourceDate] = (newEvents[sourceDate] || []).filter((e: Event) => e.id !== movedEvent.id);
       newEvents[targetDate] = [...(newEvents[targetDate] || []), updatedEvent];
 
       setEvents(newEvents);
@@ -105,6 +110,12 @@ const Calendar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (width !== undefined) {
+      setIsMobile(width < 768);
+    }
+  }, [width]);
+
   const getWeekDays = (date: Date) => {
     const start = startOfWeek(date);
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -135,7 +146,6 @@ const Calendar = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePreviousWeek, handleNextWeek, selectedEvent]);
 
-
   useEffect(() => {
     const cleanup = monitorForElements({
       onDrop: handleDragEnd,
@@ -150,7 +160,52 @@ const Calendar = () => {
     }
   };
 
-  const swipeHandlers = useSwipe(handleSwipe);
+  const { onTouchStart, onTouchMove, onTouchEnd, swipeDelta } = useSwipe();
+
+  const touchStartTime = useRef(Date.now());
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsSwiping(true);
+    touchStartTime.current = Date.now();
+    onTouchStart(e);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping) return;
+    onTouchMove(e);
+    setOffset(swipeDelta);
+    
+    // Preview next/previous date during swipe
+    if (swipeDelta < -50 && !tempDate) {
+      setTempDate(addDays(currentDate, 1));
+    } else if (swipeDelta > 50 && !tempDate) {
+      setTempDate(addDays(currentDate, -1));
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setIsSwiping(false);
+    onTouchEnd(e);
+    
+    const containerWidth = containerRef.current?.offsetWidth || window.innerWidth;
+    const targetIndex = Math.round(-offset / containerWidth);
+    const newDate = addDays(currentDate, targetIndex);
+    
+    // Animate to the new center position
+    setCurrentDate(newDate);
+    setOffset(0);
+    setTempDate(null);
+  };
+
+  useEffect(() => {
+    const todayKey = format(new Date(), 'yyyy-MM-dd');
+    if (!events[todayKey]) {
+      setEvents(prev => ({
+        ...prev,
+        [todayKey]: []
+      }));
+    }
+  }, []);
 
   return (
     <div className="h-screen flex flex-col">
@@ -159,28 +214,43 @@ const Calendar = () => {
         isMobile={isMobile} 
       />
       
-      <div {...swipeHandlers} className="flex-1 overflow-hidden">
+      <div 
+        ref={containerRef}
+        className="flex-1 overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className={`flex ${!isMobile && 'gap-4'} h-full p-4`}>
           {isMobile ? (
-            <AnimatePresence mode='wait'>
-              <motion.div
-                key={currentDate.toISOString()}
-                initial={{ x: direction === 'left' ? 300 : -300, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: direction === 'left' ? -300 : 300, opacity: 0 }}
-                transition={{ type: 'tween', duration: 0.3 }}
-                className="w-full h-full"
-              >
-                <DayColumn
-                  date={currentDate}
-                  events={events[format(currentDate, 'yyyy-MM-dd')] || []}
-                  isMobile={isMobile}
-                  index={0}
-                  onEventClick={setSelectedEvent}
-                  dragPreview={dragPreview?.targetDate === format(currentDate, 'yyyy-MM-dd') ? dragPreview.event : null}
-                />
-              </motion.div>
-            </AnimatePresence>
+            <motion.div 
+              className="flex h-full"
+              style={{ 
+                x: offset - (containerRef.current?.offsetWidth || 0),
+                width: '300%',
+                transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)'
+              }}
+            >
+              {[addDays(currentDate, -1), currentDate, addDays(currentDate, 1)].map((date, index) => (
+                <motion.div
+                  key={date.toISOString()}
+                  className="w-[100vw] flex-shrink-0 h-full px-2"
+                  style={{
+                    opacity: 1 - Math.abs(offset)/(containerRef.current?.offsetWidth || 1 * 0.5),
+                    scale: 1 - Math.abs(offset)/(containerRef.current?.offsetWidth || 1 * 2),
+                  }}
+                >
+                  <DayColumn
+                    date={date}
+                    events={events[format(date, 'yyyy-MM-dd')] || []}
+                    isMobile={isMobile}
+                    index={index}
+                    onEventClick={setSelectedEvent}
+                    dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
           ) : (
             getWeekDays(currentDate).map((date, index) => (
               <DayColumn
@@ -290,37 +360,22 @@ const DayColumn = ({ date, events, dragPreview, ...props }: DayColumnProps) => {
   return (
     <motion.div
       ref={columnRef}
-      className={`flex-1 ${isMobile ? 'min-w-[90vw]' : ''}`}
+      className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative`}
       data-day={dayOffset}
     >
-      <div className="h-full bg-gray-50 rounded-lg p-2 relative">
-        <div className="font-bold mb-2">
-          {format(date, 'EEE, MMM d')}
-        </div>
+      <div className="font-bold mb-2 text-black text-xl">
+        {format(date, 'EEE, MMM d')}
+      </div>
 
-        <div className="relative z-10">
-          {sortedEvents.map((event, index) => (
-            <div key={event.id}>
-              {/* Insert preview before the event at calculated position */}
-              {dragPreview?.id === event.id && (
-                <PreviewComponent event={dragPreview} />
-              )}
-              {previewPosition === index && (
-                <PreviewComponent event={dragPreview} />
-              )}
-              <DraggableEvent
-                event={event}
-                date={format(date, 'yyyy-MM-dd')}
-                onEventClick={props.onEventClick}
-              />
-            </div>
-          ))}
-          
-          {/* Add preview at end if needed */}
-          {(previewPosition === sortedEvents.length || previewPosition === -1) && dragPreview && (
-            <PreviewComponent event={dragPreview} />
-          )}
-        </div>
+      <div className="relative z-10">
+        {sortedEvents.map((event, index) => (
+          <DraggableEvent
+            key={event.id}
+            event={event}
+            date={format(date, 'yyyy-MM-dd')}
+            onEventClick={props.onEventClick}
+          />
+        ))}
       </div>
     </motion.div>
   );
@@ -356,8 +411,8 @@ const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: str
       className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all"
       whileHover={{ scale: 1.01 }}
     >
-      <h3 className="font-medium">{event.title}</h3>
-      <p className="text-sm text-gray-500">{event.time}</p>
+      <h3 className="font-medium text-black">{event.title}</h3>
+      <p className="text-sm text-gray-700">{event.time}</p>
     </motion.div>
   );
 };
