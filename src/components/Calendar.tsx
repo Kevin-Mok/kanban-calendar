@@ -71,8 +71,8 @@ const Calendar = () => {
     const cleanup = monitorForElements({
       onDrop: handleDragEnd,
       onDrag: ({ source, location }) => {
-        console.log('Drag source data:', source?.data);
-        console.log('Current drop targets:', location?.current?.dropTargets);
+        //console.log('Drag source data:', source?.data);
+        //console.log('Current drop targets:', location?.current?.dropTargets);
 
         if (!source?.data) {
           console.warn('No drag data found. Source:', source);
@@ -466,83 +466,56 @@ const DraggableEvent = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const touchTimer = useRef<number | null>(null);
-  const startPos = useRef({ x: 0, y: 0 });
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const lastEdgeTrigger = useRef<number>(0);
+  const screenWidth = useRef(window.innerWidth);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchTimer.current = window.setTimeout(() => {
-      const touch = e.touches[0];
-      startPos.current = { x: touch.clientX, y: touch.clientY };
-      setIsDragging(true);
-      onDragStart();
-      e.stopPropagation();
-    }, 500);
-  };
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    
-    const touch = e.touches[0];
-    const newX = touch.clientX - startPos.current.x;
-    const newY = touch.clientY - startPos.current.y;
-    setPosition({ x: newX, y: newY });
-    e.stopPropagation();
+    const cleanup = draggable({
+      element,
+      onDragStart: () => {
+        screenWidth.current = window.innerWidth;
+        setIsDragging(true);
+        onDragStart();
+      },
+      onDrag: ({ location }) => {
+        const currentX = location.current.input.clientX;
+        
+        // Simple edge detection without delta checks
+        if (currentX < 50) {
+          onDayChange('left');
+        } else if (currentX > screenWidth.current - 50) {
+          onDayChange('right');
+        }
+      },
+      onDrop: () => {
+        setIsDragging(false);
+        onDragEnd();
+      },
+      getInitialData: () => ({ id: event.id, date }),
+      dragHandle: element
+    });
 
-    // Fixed edge detection logic
-    const screenWidth = window.innerWidth;
-    const now = Date.now();
-    
-    if (touch.clientX < 50 && now - lastEdgeTrigger.current > 500) {
-      onDayChange('left'); // Changed to 'left' for previous day
-      lastEdgeTrigger.current = now;
-    } else if (touch.clientX > screenWidth - 50 && now - lastEdgeTrigger.current > 500) {
-      onDayChange('right'); // Changed to 'right' for next day
-      lastEdgeTrigger.current = now;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchTimer.current) {
-      clearTimeout(touchTimer.current);
-      touchTimer.current = null;
-    }
-    if (isDragging) {
-      setIsDragging(false);
-      onDragEnd();
-    }
-    // Force reset dragging state
-    setTimeout(() => setIsEventDragging(false), 100);
-  };
+    return cleanup;
+  }, [date, event.id, onDragEnd, onDragStart, onDayChange]);
 
   return (
     <motion.div
       ref={ref}
       layoutId={event.id}
-      onClick={() => onEventClick(event)}
-      className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all relative"
+      onClick={() => !isDragging && onEventClick(event)}
+      className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all relative select-none"
       whileHover={{ scale: 1.01 }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      style={{
+        opacity: isDragging ? 0.7 : 1,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'manipulation'
+      }}
     >
-      {/* Main event content */}
       <h3 className="font-medium text-black">{event.title}</h3>
       <p className="text-sm text-gray-700">{event.time}</p>
-
-      {/* Floating preview */}
-      {isDragging && (
-        <motion.div
-          className="absolute inset-0 bg-white rounded shadow-lg border-2 border-blue-500"
-          style={{
-            x: position.x,
-            y: position.y,
-            zIndex: 1000,
-            pointerEvents: 'none'
-          }}
-        />
-      )}
     </motion.div>
   );
 };
