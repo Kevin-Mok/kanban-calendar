@@ -26,6 +26,7 @@ const Calendar = () => {
   const [offset, setOffset] = useState(0);
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [direction, setDirection] = useState<'left' | 'right'>('left');
+  const [isEventDragging, setIsEventDragging] = useState(false);
 
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
@@ -171,11 +172,10 @@ const Calendar = () => {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isSwiping) return;
+    if (isEventDragging || !isSwiping) return;
     onTouchMove(e);
     setOffset(swipeDelta);
     
-    // Preview next/previous date during swipe
     if (swipeDelta < -50 && !tempDate) {
       setTempDate(addDays(currentDate, 1));
     } else if (swipeDelta > 50 && !tempDate) {
@@ -200,12 +200,50 @@ const Calendar = () => {
   useEffect(() => {
     const todayKey = format(new Date(), 'yyyy-MM-dd');
     if (!events[todayKey]) {
-      setEvents(prev => ({
+      setEvents((prev: EventsByDate) => ({
         ...prev,
         [todayKey]: []
       }));
     }
   }, []);
+
+  const handleDayChange = useCallback((direction: 'left' | 'right') => {
+    setCurrentDate(prev => {
+      const newDate = addDays(prev, direction === 'left' ? -1 : 1);
+      // Reset dragging state to enable future swipes
+      setIsEventDragging(false);
+      // Smooth transition
+      setOffset(direction === 'left' ? -window.innerWidth : window.innerWidth);
+      setTimeout(() => setOffset(0), 10);
+      return newDate;
+    });
+  }, []);
+
+  const handleEventMove = (eventId: string, newDate: Date) => {
+    setEvents(prev => {
+      const newEvents = { ...prev };
+      const oldDateKey = Object.keys(newEvents).find(key => 
+        newEvents[key].some((e: Event) => e.id === eventId)
+      );
+      
+      if (oldDateKey) {
+        const event = newEvents[oldDateKey].find((e: Event) => e.id === eventId);
+        if (event) {
+          const newDateKey = format(newDate, 'yyyy-MM-dd');
+          
+          // Remove from old date
+          newEvents[oldDateKey] = newEvents[oldDateKey].filter((e: Event) => e.id !== eventId);
+          
+          // Add to new date
+          newEvents[newDateKey] = [
+            ...(newEvents[newDateKey] || []),
+            { ...event, date: newDateKey }
+          ];
+        }
+      }
+      return newEvents;
+    });
+  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -247,6 +285,10 @@ const Calendar = () => {
                     index={index}
                     onEventClick={setSelectedEvent}
                     dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
+                    onDragStart={() => setIsEventDragging(true)}
+                    onDragEnd={() => setIsEventDragging(false)}
+                    handleEventMove={handleEventMove}
+                    onDayChange={handleDayChange}
                   />
                 </motion.div>
               ))}
@@ -261,6 +303,10 @@ const Calendar = () => {
                 index={index}
                 onEventClick={setSelectedEvent}
                 dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
+                onDragStart={() => setIsEventDragging(true)}
+                onDragEnd={() => setIsEventDragging(false)}
+                handleEventMove={handleEventMove}
+                onDayChange={handleDayChange}
               />
             ))
           )}
@@ -286,6 +332,10 @@ interface DayColumnProps {
   index: number;
   onEventClick: (event: Event) => void;
   dragPreview: Event | null;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  handleEventMove: (eventId: string, newDate: Date) => void;
+  onDayChange: (direction: 'left' | 'right') => void;
 }
 
 const PreviewComponent = ({ event }: { event: Event }) => (
@@ -300,7 +350,16 @@ const PreviewComponent = ({ event }: { event: Event }) => (
   </motion.div>
 );
 
-const DayColumn = ({ date, events, dragPreview, ...props }: DayColumnProps) => {
+const DayColumn = ({ 
+  date, 
+  events, 
+  dragPreview, 
+  onDragStart, 
+  onDragEnd,
+  onEventClick,
+  handleEventMove,
+  onDayChange
+}: DayColumnProps) => {
   const columnRef = useRef<HTMLDivElement>(null);
   const { width } = useWindowSize();
   const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
@@ -373,7 +432,16 @@ const DayColumn = ({ date, events, dragPreview, ...props }: DayColumnProps) => {
             key={event.id}
             event={event}
             date={format(date, 'yyyy-MM-dd')}
-            onEventClick={props.onEventClick}
+            onEventClick={onEventClick}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onDayChange={(dir) => {
+              // Update calendar view first
+              onDayChange(dir);
+              // Then move the event to the new date
+              const newDate = addDays(date, dir === 'left' ? -1 : 1);
+              handleEventMove(event.id, newDate);
+            }}
           />
         ))}
       </div>
@@ -381,38 +449,100 @@ const DayColumn = ({ date, events, dragPreview, ...props }: DayColumnProps) => {
   );
 };
 
-const DraggableEvent = ({ event, date, onEventClick }: { event: Event; date: string; onEventClick: (event: Event) => void }) => {
+const DraggableEvent = ({ 
+  event, 
+  date, 
+  onEventClick,
+  onDragStart,
+  onDragEnd,
+  onDayChange
+}: { 
+  event: Event; 
+  date: string;
+  onEventClick: (event: Event) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDayChange: (direction: 'left' | 'right') => void;
+}) => {
   const ref = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchTimer = useRef<number | null>(null);
+  const startPos = useRef({ x: 0, y: 0 });
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const lastEdgeTrigger = useRef<number>(0);
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchTimer.current = window.setTimeout(() => {
+      const touch = e.touches[0];
+      startPos.current = { x: touch.clientX, y: touch.clientY };
+      setIsDragging(true);
+      onDragStart();
+      e.stopPropagation();
+    }, 500);
+  };
 
-    return draggable({
-      element,
-      getInitialData: () => ({ id: event.id, date }),
-      onDragStart: () => {
-        element.style.opacity = '0.5';
-        element.style.transform = 'scale(0.98)';
-        console.log('Drag started with data:', { id: event.id, date });
-      },
-      onDrop: () => {
-        element.style.opacity = '';
-        element.style.transform = '';
-      }
-    });
-  }, [event.id, date]);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const newX = touch.clientX - startPos.current.x;
+    const newY = touch.clientY - startPos.current.y;
+    setPosition({ x: newX, y: newY });
+    e.stopPropagation();
+
+    // Fixed edge detection logic
+    const screenWidth = window.innerWidth;
+    const now = Date.now();
+    
+    if (touch.clientX < 50 && now - lastEdgeTrigger.current > 500) {
+      onDayChange('left'); // Changed to 'left' for previous day
+      lastEdgeTrigger.current = now;
+    } else if (touch.clientX > screenWidth - 50 && now - lastEdgeTrigger.current > 500) {
+      onDayChange('right'); // Changed to 'right' for next day
+      lastEdgeTrigger.current = now;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimer.current) {
+      clearTimeout(touchTimer.current);
+      touchTimer.current = null;
+    }
+    if (isDragging) {
+      setIsDragging(false);
+      onDragEnd();
+    }
+    // Force reset dragging state
+    setTimeout(() => setIsEventDragging(false), 100);
+  };
 
   return (
     <motion.div
       ref={ref}
       layoutId={event.id}
       onClick={() => onEventClick(event)}
-      className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all"
+      className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all relative"
       whileHover={{ scale: 1.01 }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
+      {/* Main event content */}
       <h3 className="font-medium text-black">{event.title}</h3>
       <p className="text-sm text-gray-700">{event.time}</p>
+
+      {/* Floating preview */}
+      {isDragging && (
+        <motion.div
+          className="absolute inset-0 bg-white rounded shadow-lg border-2 border-blue-500"
+          style={{
+            x: position.x,
+            y: position.y,
+            zIndex: 1000,
+            pointerEvents: 'none'
+          }}
+        />
+      )}
     </motion.div>
   );
 };
