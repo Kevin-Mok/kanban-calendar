@@ -487,8 +487,20 @@ const DraggableEvent = ({
         touchAction: 'manipulation'
       }}
     >
+      <div className="relative rounded overflow-hidden mb-2">
+        {event.imageUrl && (
+          <img 
+            src={event.imageUrl} 
+            alt={event.title}
+            className="w-full h-16 md:h-12 object-cover pointer-events-none"
+            draggable="false"
+          />
+        )}
+        <div className="absolute top-1 right-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
+          {event.time}
+        </div>
+      </div>
       <h3 className="font-medium text-black">{event.title}</h3>
-      <p className="text-sm text-gray-700">{event.time}</p>
     </motion.div>
   );
 };
