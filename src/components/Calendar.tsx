@@ -467,6 +467,7 @@ const DraggableEvent = ({
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const screenWidth = useRef(window.innerWidth);
+  const lastChangeTime = useRef(0); // Add a ref to track last change time
 
   useEffect(() => {
     const element = ref.current;
@@ -478,15 +479,21 @@ const DraggableEvent = ({
         screenWidth.current = window.innerWidth;
         setIsDragging(true);
         onDragStart();
+        lastChangeTime.current = Date.now(); // Reset timer on drag start
       },
       onDrag: ({ location }) => {
         const currentX = location.current.input.clientX;
+        const now = Date.now();
         
-        // Simple edge detection without delta checks
-        if (currentX < 50) {
-          onDayChange('left');
-        } else if (currentX > screenWidth.current - 50) {
-          onDayChange('right');
+        // Only allow one change per 500ms
+        if (now - lastChangeTime.current > 500) {
+          if (currentX < 50) {
+            lastChangeTime.current = now;
+            onDayChange('left');
+          } else if (currentX > screenWidth.current - 50) {
+            lastChangeTime.current = now;
+            onDayChange('right');
+          }
         }
       },
       onDrop: () => {
