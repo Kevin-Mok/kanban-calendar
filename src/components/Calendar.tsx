@@ -188,7 +188,7 @@ const Calendar = () => {
   }, []);
 
   const handleEventMove = (eventId: string, newDate: Date) => {
-    setEvents(prev => {
+    setEvents((prev: EventsByDate) => {
       const newEvents = { ...prev };
       const oldDateKey = Object.keys(newEvents).find(key => 
         newEvents[key].some((e: Event) => e.id === eventId)
@@ -342,12 +342,19 @@ const DayColumn = ({
     return hours * 60 + minutes;
   };
 
-  const sortedEvents = useMemo(() => 
-    [...events].sort((a, b) => 
-      parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time)
-    ),
-    [events]
-  );
+  const sortedEvents = useMemo(() => {
+    const seenIds = new Set<string>();
+    return [...events]
+      .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time))
+      .filter(event => {
+        if (seenIds.has(event.id)) {
+          //console.warn(`Duplicate event ID detected: ${event.id}`);
+          return false;
+        }
+        seenIds.add(event.id);
+        return true;
+      });
+  }, [events]);
 
   useEffect(() => {
     setIsMobile(width < 768); // Update isMobile after hydration
