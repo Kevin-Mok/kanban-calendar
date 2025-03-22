@@ -13,7 +13,7 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipe } from '@/hooks/useSwipe';
-import { format, addDays, startOfWeek, differenceInDays, parseISO } from 'date-fns';
+import { format, addDays, startOfWeek, differenceInDays, parseISO, isSameDay } from 'date-fns';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import EventModal from '@/components/EventModal';
 import eventsData from '@/data/events';
@@ -94,7 +94,7 @@ const Calendar = () => {
   }, [width]);
 
   const getWeekDays = (date: Date) => {
-    const start = startOfWeek(date);
+    const start = startOfWeek(date, { weekStartsOn: 0 });
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   };
 
@@ -233,6 +233,7 @@ const Calendar = () => {
         currentDate={currentDate} 
         isMobile={isMobile} 
       />
+      {isMobile && <WeekHeader currentDate={currentDate} />}
       
       <div 
         ref={containerRef}
@@ -492,13 +493,52 @@ const Header = ({
   currentDate: Date; 
   isMobile: boolean;
 }) => {
+  const weekRange = useMemo(() => {
+    if (!isMobile) return '';
+    const start = startOfWeek(currentDate, { weekStartsOn: 0 });
+    const end = addDays(start, 6);
+    return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`;
+  }, [currentDate, isMobile]);
+
   return (
     <div className="p-4 border-b">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-black">
-          {format(currentDate, 'MMMM yyyy')}
+          {isMobile ? weekRange : format(currentDate, 'MMMM yyyy')}
         </h2>
       </div>
+    </div>
+  );
+};
+
+const WeekHeader = ({ currentDate }: { currentDate: Date }) => {
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Start week on Sunday
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  }, [currentDate]);
+
+  return (
+    <div className="flex justify-between px-2 py-3 border-b">
+      {weekDays.map((day, index) => (
+        <motion.div
+          key={day.toISOString()}
+          className="flex flex-col items-center flex-1"
+          initial={false}
+          animate={{ backgroundColor: isSameDay(day, currentDate) ? '#3B82F6' : 'transparent' }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className={`text-sm font-medium ${
+            isSameDay(day, currentDate) ? 'text-white' : 'text-gray-600'
+          }`}>
+            {format(day, 'EEE')}
+          </div>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            isSameDay(day, currentDate) ? 'bg-blue-500 text-white' : 'text-gray-900'
+          }`}>
+            {format(day, 'd')}
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 };
