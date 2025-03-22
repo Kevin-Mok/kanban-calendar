@@ -18,6 +18,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import EventModal from '@/components/EventModal';
 import eventsData from '@/data/events';
 import { Event, EventsByDate } from '@/types';
+import CalendarHeader from '@/components/CalendarHeader';
 
 const Calendar = () => {
   const { width } = useWindowSize();
@@ -28,10 +29,7 @@ const Calendar = () => {
   const [direction, setDirection] = useState<'left' | 'right'>('left');
   const [isEventDragging, setIsEventDragging] = useState(false);
 
-  const [currentDate, setCurrentDate] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  });
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<EventsByDate>(eventsData);
@@ -98,13 +96,13 @@ const Calendar = () => {
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   };
 
-  const handlePreviousWeek = useCallback(() => {
+  const handlePrevWeek = () => {
     setCurrentDate(prev => addDays(prev, -7));
-  }, []);
+  };
 
-  const handleNextWeek = useCallback(() => {
+  const handleNextWeek = () => {
     setCurrentDate(prev => addDays(prev, 7));
-  }, []);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -112,7 +110,7 @@ const Calendar = () => {
       
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        handlePreviousWeek();
+        handlePrevWeek();
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         handleNextWeek();
@@ -121,12 +119,12 @@ const Calendar = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePreviousWeek, handleNextWeek, selectedEvent]);
+  }, [handlePrevWeek, handleNextWeek, selectedEvent]);
 
   const handleSwipe = (dir: 'left' | 'right') => {
     if (isMobile) {
       setDirection(dir);
-      setCurrentDate(prev => dir === 'left' ? addDays(prev, 1) : addDays(prev, -1));
+      setCurrentDate(prev => addDays(prev, dir === 'left' ? 7 : -7));
     }
   };
 
@@ -178,9 +176,7 @@ const Calendar = () => {
   const handleDayChange = useCallback((direction: 'left' | 'right') => {
     setCurrentDate(prev => {
       const newDate = addDays(prev, direction === 'left' ? -1 : 1);
-      // Reset dragging state to enable future swipes
       setIsEventDragging(false);
-      // Smooth transition
       setOffset(direction === 'left' ? -window.innerWidth : window.innerWidth);
       setTimeout(() => setOffset(0), 10);
       return newDate;
@@ -229,9 +225,10 @@ const Calendar = () => {
 
   return (
     <div className="h-screen flex flex-col">
-      <Header 
-        currentDate={currentDate} 
-        isMobile={isMobile} 
+      <CalendarHeader 
+        currentDate={currentDate}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
       />
       {isMobile && <WeekHeader currentDate={currentDate} />}
       
@@ -375,6 +372,9 @@ const DayColumn = ({
     return cleanup;
   }, [date]);
 
+  console.log('Date value:', date);
+  console.log('Is valid date:', date instanceof Date && !isNaN(date));
+
   return (
     <motion.div
       ref={columnRef}
@@ -502,31 +502,6 @@ const DraggableEvent = ({
       </div>
       <h3 className="font-medium text-black">{event.title}</h3>
     </motion.div>
-  );
-};
-
-const Header = ({ 
-  currentDate, 
-  isMobile
-}: { 
-  currentDate: Date; 
-  isMobile: boolean;
-}) => {
-  const weekRange = useMemo(() => {
-    if (!isMobile) return '';
-    const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-    const end = addDays(start, 6);
-    return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`;
-  }, [currentDate, isMobile]);
-
-  return (
-    <div className="p-4 border-b">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-black">
-          {isMobile ? weekRange : format(currentDate, 'MMMM yyyy')}
-        </h2>
-      </div>
-    </div>
   );
 };
 
