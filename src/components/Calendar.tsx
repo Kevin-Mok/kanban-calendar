@@ -264,7 +264,7 @@ const Calendar = () => {
             <motion.div 
               className="flex h-full"
               style={{ 
-                x: offset - (containerRef.current?.offsetWidth || 0),
+                x: offset - (containerRef.current?.offsetWidth || window.innerWidth),
                 width: '300%',
                 transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)'
               }}
