@@ -3,6 +3,8 @@ export interface Event {
   title: string;
   time: string;
   date: string;
+  description?: string;
+  imageUrl?: string;
   // add other properties as needed
 }
 

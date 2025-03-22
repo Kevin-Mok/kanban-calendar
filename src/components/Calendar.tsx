@@ -38,6 +38,14 @@ const Calendar = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const screenWidth = useRef(isClient ? window.innerWidth : 0);
+
   const handleDragEnd = useCallback((event: any) => {
     const { source, location } = event;
     if (!location?.current?.dropTargets[0]) return;
@@ -148,11 +156,10 @@ const Calendar = () => {
     setIsSwiping(false);
     onTouchEnd(e);
     
-    const containerWidth = containerRef.current?.offsetWidth || window.innerWidth;
+    const containerWidth = isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0;
     const targetIndex = Math.round(-offset / containerWidth);
     const newDate = addDays(currentDate, targetIndex);
     
-    // Animate to the new center position
     setCurrentDate(newDate);
     setOffset(0);
     setTempDate(null);
@@ -191,20 +198,34 @@ const Calendar = () => {
         const event = newEvents[oldDateKey].find((e: Event) => e.id === eventId);
         if (event) {
           const newDateKey = format(newDate, 'yyyy-MM-dd');
-          
-          // Remove from old date
           newEvents[oldDateKey] = newEvents[oldDateKey].filter((e: Event) => e.id !== eventId);
-          
-          // Add to new date
           newEvents[newDateKey] = [
             ...(newEvents[newDateKey] || []),
-            { ...event, date: newDateKey }
+            event
           ];
         }
       }
       return newEvents;
     });
   };
+
+  const mobileViewStyle = {
+    x: offset - (isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0),
+    width: '300%',
+    transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)'
+  };
+
+  const motionDivStyle = {
+    opacity: 1 - Math.abs(offset)/(isClient ? (containerRef.current?.offsetWidth || 1) * 0.5 : 1),
+    scale: 1 - Math.abs(offset)/(isClient ? (containerRef.current?.offsetWidth || 1) * 2 : 1),
+  };
+
+  const handleEventClick = useCallback(({ event, date }: { event: Event; date: string }) => {
+    setSelectedEvent({
+      ...event,
+      date
+    });
+  }, []);
 
   return (
     <div className="h-screen flex flex-col">
@@ -224,31 +245,25 @@ const Calendar = () => {
           {isMobile ? (
             <motion.div 
               className="flex h-full"
-              style={{ 
-                x: offset - (containerRef.current?.offsetWidth || window.innerWidth),
-                width: '300%',
-                transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)'
-              }}
+              style={mobileViewStyle}
             >
               {[addDays(currentDate, -1), currentDate, addDays(currentDate, 1)].map((date, index) => (
                 <motion.div
                   key={date.toISOString()}
                   className="w-[100vw] flex-shrink-0 h-full px-2"
-                  style={{
-                    opacity: 1 - Math.abs(offset)/(containerRef.current?.offsetWidth || 1 * 0.5),
-                    scale: 1 - Math.abs(offset)/(containerRef.current?.offsetWidth || 1 * 2),
-                  }}
+                  style={motionDivStyle}
                 >
                   <DayColumn
                     date={date}
                     events={events[format(date, 'yyyy-MM-dd')] || []}
                     isMobile={isMobile}
                     index={index}
-                    onEventClick={setSelectedEvent}
+                    onEventClick={handleEventClick}
                     onDragStart={() => setIsEventDragging(true)}
                     onDragEnd={() => setIsEventDragging(false)}
                     handleEventMove={handleEventMove}
                     onDayChange={handleDayChange}
+                    isClient={isClient}
                   />
                 </motion.div>
               ))}
@@ -261,11 +276,12 @@ const Calendar = () => {
                 events={events[format(date, 'yyyy-MM-dd')] || []}
                 isMobile={isMobile}
                 index={index}
-                onEventClick={setSelectedEvent}
+                onEventClick={handleEventClick}
                 onDragStart={() => setIsEventDragging(true)}
                 onDragEnd={() => setIsEventDragging(false)}
                 handleEventMove={handleEventMove}
                 onDayChange={handleDayChange}
+                isClient={isClient}
               />
             ))
           )}
@@ -289,11 +305,12 @@ interface DayColumnProps {
   events: Event[];
   isMobile: boolean;
   index: number;
-  onEventClick: (event: Event) => void;
+  onEventClick: (eventData: { event: Event; date: string }) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   handleEventMove: (eventId: string, newDate: Date) => void;
   onDayChange: (direction: 'left' | 'right') => void;
+  isClient: boolean;
 }
 
 const DayColumn = ({ 
@@ -303,7 +320,8 @@ const DayColumn = ({
   onDragEnd,
   onEventClick,
   handleEventMove,
-  onDayChange
+  onDayChange,
+  isClient
 }: DayColumnProps) => {
   const columnRef = useRef<HTMLDivElement>(null);
   const { width } = useWindowSize();
@@ -360,21 +378,24 @@ const DayColumn = ({
       </div>
 
       <div className="relative z-10">
-        {sortedEvents.map((event, index) => (
-          <DraggableEvent
-            key={event.id}
-            event={event}
-            date={format(date, 'yyyy-MM-dd')}
-            onEventClick={onEventClick}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-            onDayChange={(dir) => {
-              onDayChange(dir);
-              const newDate = addDays(date, dir === 'left' ? -1 : 1);
-              handleEventMove(event.id, newDate);
-            }}
-          />
-        ))}
+        {sortedEvents
+          .filter(event => event && event.id) // Filter out invalid events
+          .map((event, index) => (
+            <DraggableEvent
+              key={event.id}
+              event={event}
+              date={format(date, 'yyyy-MM-dd')}
+              onEventClick={onEventClick}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onDayChange={(dir) => {
+                onDayChange(dir);
+                const newDate = addDays(date, dir === 'left' ? -1 : 1);
+                handleEventMove(event.id, newDate);
+              }}
+              isClient={isClient}
+            />
+          ))}
       </div>
     </motion.div>
   );
@@ -386,19 +407,26 @@ const DraggableEvent = ({
   onEventClick,
   onDragStart,
   onDragEnd,
-  onDayChange
+  onDayChange,
+  isClient
 }: { 
   event: Event; 
   date: string;
-  onEventClick: (event: Event) => void;
+  onEventClick: (eventData: { event: Event; date: string }) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDayChange: (direction: 'left' | 'right') => void;
+  isClient: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const screenWidth = useRef(window.innerWidth);
-  const lastChangeTime = useRef(0); // Add a ref to track last change time
+  const screenWidth = useRef(isClient ? window.innerWidth : 0);
+  const lastChangeTime = useRef(0);
+
+  if (!event || typeof event !== 'object' || !event.id) {
+    console.error('Invalid event object:', event);
+    return null;
+  }
 
   useEffect(() => {
     const element = ref.current;
@@ -410,13 +438,12 @@ const DraggableEvent = ({
         screenWidth.current = window.innerWidth;
         setIsDragging(true);
         onDragStart();
-        lastChangeTime.current = Date.now(); // Reset timer on drag start
+        lastChangeTime.current = Date.now();
       },
       onDrag: ({ location }) => {
         const currentX = location.current.input.clientX;
         const now = Date.now();
         
-        // Only allow one change per 500ms
         if (now - lastChangeTime.current > 500) {
           if (currentX < 50) {
             lastChangeTime.current = now;
@@ -442,7 +469,7 @@ const DraggableEvent = ({
     <motion.div
       ref={ref}
       layoutId={event.id}
-      onClick={() => !isDragging && onEventClick(event)}
+      onClick={() => !isDragging && onEventClick({ event, date })}
       className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all relative select-none"
       whileHover={{ scale: 1.01 }}
       style={{
