@@ -35,10 +35,6 @@ const Calendar = () => {
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<EventsByDate>(eventsData);
-  const [dragPreview, setDragPreview] = useState<{
-    event: Event;
-    targetDate: string;
-  } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +52,6 @@ const Calendar = () => {
       const sourceDate = source.data.date;
       const targetDate = dropTarget.date;
 
-      // Update the event's date when moving between weeks
       const updatedEvent = { ...movedEvent, date: targetDate };
 
       newEvents[sourceDate] = (newEvents[sourceDate] || []).filter((e: Event) => e.id !== movedEvent.id);
@@ -64,42 +59,15 @@ const Calendar = () => {
 
       setEvents(newEvents);
     }
-    setDragPreview(null); 
   }, []);
 
   useEffect(() => {
     const cleanup = monitorForElements({
       onDrop: handleDragEnd,
-      onDrag: ({ source, location }) => {
-        //console.log('Drag source data:', source?.data);
-        //console.log('Current drop targets:', location?.current?.dropTargets);
-
-        if (!source?.data) {
-          console.warn('No drag data found. Source:', source);
-          setDragPreview(null);
-          return;
-        }
-
-        const dropTarget = location?.current?.dropTargets[0]?.data;
-        if (dropTarget?.date) {
-          const movedEvent = Object.values(events)
-            .flat()
-            .find((e: Event) => e.id === source.data.id);
-          
-          if (movedEvent) {
-            setDragPreview({
-              event: movedEvent,
-              targetDate: dropTarget.date
-            });
-          }
-        } else {
-          setDragPreview(null);
-        }
-      }
     });
 
     return () => cleanup();
-  }, [events, handleDragEnd]);
+  }, [handleDragEnd]);
 
   const eventsRef = useRef(eventsData);
   eventsRef.current = events;
@@ -146,13 +114,6 @@ const Calendar = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePreviousWeek, handleNextWeek, selectedEvent]);
-
-  useEffect(() => {
-    const cleanup = monitorForElements({
-      onDrop: handleDragEnd,
-    });
-    return () => cleanup();
-  }, [handleDragEnd]);
 
   const handleSwipe = (dir: 'left' | 'right') => {
     if (isMobile) {
@@ -284,7 +245,6 @@ const Calendar = () => {
                     isMobile={isMobile}
                     index={index}
                     onEventClick={setSelectedEvent}
-                    dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
                     onDragStart={() => setIsEventDragging(true)}
                     onDragEnd={() => setIsEventDragging(false)}
                     handleEventMove={handleEventMove}
@@ -302,7 +262,6 @@ const Calendar = () => {
                 isMobile={isMobile}
                 index={index}
                 onEventClick={setSelectedEvent}
-                dragPreview={dragPreview?.targetDate === format(date, 'yyyy-MM-dd') ? dragPreview.event : null}
                 onDragStart={() => setIsEventDragging(true)}
                 onDragEnd={() => setIsEventDragging(false)}
                 handleEventMove={handleEventMove}
@@ -331,29 +290,15 @@ interface DayColumnProps {
   isMobile: boolean;
   index: number;
   onEventClick: (event: Event) => void;
-  dragPreview: Event | null;
   onDragStart: () => void;
   onDragEnd: () => void;
   handleEventMove: (eventId: string, newDate: Date) => void;
   onDayChange: (direction: 'left' | 'right') => void;
 }
 
-const PreviewComponent = ({ event }: { event: Event }) => (
-  <motion.div
-    className="bg-blue-100 p-4 rounded shadow mb-2 mx-1 border-2 border-blue-300  pointer-events-none"
-    initial={{ opacity: 0, scale: 0.95 }}
-    animate={{ opacity: 0.4, scale: 1 }}
-    exit={{ opacity: 0 }}
-  >
-    <h3 className="font-medium">{event.title}</h3>
-    <p className="text-sm text-gray-500">{event.time}</p>
-  </motion.div>
-);
-
 const DayColumn = ({ 
   date, 
   events, 
-  dragPreview, 
   onDragStart, 
   onDragEnd,
   onEventClick,
@@ -362,7 +307,7 @@ const DayColumn = ({
 }: DayColumnProps) => {
   const columnRef = useRef<HTMLDivElement>(null);
   const { width } = useWindowSize();
-  const [isMobile, setIsMobile] = useState(false); // Default to false for SSR
+  const [isMobile, setIsMobile] = useState(false);
 
   const parseTimeToMinutes = (time: string) => {
     const [timePart, modifier] = time.split(' ');
@@ -385,7 +330,6 @@ const DayColumn = ({
     [events]
   );
 
-
   useEffect(() => {
     setIsMobile(width < 768); // Update isMobile after hydration
   }, [width]);
@@ -404,17 +348,6 @@ const DayColumn = ({
 
     return cleanup;
   }, [date]);
-
-  const previewPosition = useMemo(() => {
-    if (!dragPreview) return -1;
-    
-    const previewMinutes = parseTimeToMinutes(dragPreview.time);
-    
-    return sortedEvents.findIndex(event => {
-      const eventMinutes = parseTimeToMinutes(event.time);
-      return eventMinutes >= previewMinutes;
-    });
-  }, [sortedEvents, dragPreview]);
 
   return (
     <motion.div
@@ -436,9 +369,7 @@ const DayColumn = ({
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onDayChange={(dir) => {
-              // Update calendar view first
               onDayChange(dir);
-              // Then move the event to the new date
               const newDate = addDays(date, dir === 'left' ? -1 : 1);
               handleEventMove(event.id, newDate);
             }}
