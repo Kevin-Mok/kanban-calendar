@@ -178,7 +178,7 @@ const Calendar = () => {
       const newDate = addDays(prev, direction === 'left' ? -1 : 1);
       setIsEventDragging(false);
       setOffset(direction === 'left' ? -window.innerWidth : window.innerWidth);
-      setTimeout(() => setOffset(0), 10);
+      setTimeout(() => setOffset(0), 500);
       return newDate;
     });
   }, []);
@@ -208,12 +208,13 @@ const Calendar = () => {
   const mobileViewStyle = {
     x: offset - (isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0),
     width: '300%',
-    transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)'
+    transition: isSwiping ? 'none' : 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
   };
 
   const motionDivStyle = {
     opacity: 1 - Math.abs(offset)/(isClient ? (containerRef.current?.offsetWidth || 1) * 0.5 : 1),
     scale: 1 - Math.abs(offset)/(isClient ? (containerRef.current?.offsetWidth || 1) * 2 : 1),
+    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
   };
 
   const handleEventClick = useCallback(({ event, date }: { event: Event; date: string }) => {
