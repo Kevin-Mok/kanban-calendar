@@ -1,18 +1,22 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, isValid } from 'date-fns';
 
-interface EventWithDate {
+interface Event {
   id: string;
   title: string;
   time: string;
-  date: string;  // Now required
   description?: string;
   imageUrl?: string;
 }
 
-const EventModal = ({ event, onClose }: { event: EventWithDate; onClose: () => void }) => {
-  // Now we can safely use event.date
-  const eventDate = parseISO(event.date);
+interface EventModalProps {
+  event: Event;
+  date: string;
+  onClose: () => void;
+}
+
+const EventModal = ({ event, date, onClose }: EventModalProps) => {
+  const eventDate = parseISO(date);
   const formattedDate = isValid(eventDate) ? format(eventDate, 'MMM d, yyyy') : 'Invalid date';
 
   return (

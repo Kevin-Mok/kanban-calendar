@@ -58,10 +58,8 @@ const Calendar = () => {
       const sourceDate = source.data.date;
       const targetDate = dropTarget.date;
 
-      const updatedEvent = { ...movedEvent, date: targetDate };
-
       newEvents[sourceDate] = (newEvents[sourceDate] || []).filter((e: Event) => e.id !== movedEvent.id);
-      newEvents[targetDate] = [...(newEvents[targetDate] || []), updatedEvent];
+      newEvents[targetDate] = [...(newEvents[targetDate] || []), movedEvent];
 
       setEvents(newEvents);
     }
@@ -218,10 +216,7 @@ const Calendar = () => {
   };
 
   const handleEventClick = useCallback(({ event, date }: { event: Event; date: string }) => {
-    setSelectedEvent({
-      ...event,
-      date
-    });
+    setSelectedEvent(event);
   }, []);
 
   return (
@@ -291,6 +286,7 @@ const Calendar = () => {
         {selectedEvent && (
           <EventModal
             event={selectedEvent}
+            date={format(date, 'yyyy-MM-dd')}
             onClose={() => setSelectedEvent(null)}
           />
         )}
@@ -374,7 +370,7 @@ const DayColumn = ({
   }, [date]);
 
   console.log('Date value:', date);
-  console.log('Is valid date:', date instanceof Date && !isNaN(date));
+  console.log('Is valid date:', date instanceof Date && !isNaN(date.getTime()));
 
   return (
     <motion.div
