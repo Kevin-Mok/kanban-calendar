@@ -27,6 +27,7 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 1.2 }}
       >
         <motion.div
           className="bg-white/95 backdrop-blur-sm rounded-lg p-8 max-w-lg w-full relative"
@@ -34,6 +35,7 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.95 }}
+          transition={{ duration: 1.2 }}
         >
           <button
             onClick={onClose}
@@ -56,15 +58,29 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
           </button>
           
           {event.imageUrl && (
-            <img
+            <motion.img
+              layoutId={`event-image-${event.id}`}
+              transition={{ duration: 1.2 }}
               src={event.imageUrl}
               alt={event.title}
               className="w-full h-56 object-cover rounded-lg mb-4 mt-2"
             />
           )}
-          <motion.h2 className="text-lg mb-4 font-sans">{event.title}</motion.h2>
+          <motion.h2 
+            layoutId={`event-title-${event.id}`}
+            transition={{ duration: 1.2 }}
+            className="text-lg mb-4 font-sans"
+          >
+            {event.title}
+          </motion.h2>
           <motion.p className="text-gray-600 mb-2 font-sans">Date: {formattedDate}</motion.p>
-          <motion.p className="text-gray-600 font-sans">Time: {event.time}</motion.p>
+          <motion.p 
+            layoutId={`event-time-${event.id}`}
+            transition={{ duration: 1.2 }}
+            className="text-gray-600 font-sans"
+          >
+            Time: {event.time}
+          </motion.p>
           {event.description && (
             <motion.p className="text-gray-600 font-sans">
               Description: {event.description}

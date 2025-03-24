@@ -71,6 +71,7 @@ export default function DraggableEvent({
       onClick={() => !isDragging && onEventClick({ event, date })}
       className="bg-white p-4 rounded shadow-md mb-2 cursor-grab active:cursor-grabbing transition-all relative select-none"
       whileHover={{ scale: 1.01 }}
+      transition={{ duration: 1.2 }}
       style={{
         opacity: isDragging ? 0.7 : 1,
         userSelect: 'none',
@@ -80,18 +81,30 @@ export default function DraggableEvent({
     >
       <div className="relative rounded overflow-hidden mb-2">
         {event.imageUrl && (
-          <img 
+          <motion.img 
+            layoutId={`event-image-${event.id}`}
+            transition={{ duration: 1.2 }}
             src={event.imageUrl} 
             alt={event.title}
             className="w-full h-16 md:h-12 object-cover pointer-events-none"
             draggable="false"
           />
         )}
-        <div className="absolute top-1 right-1 bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-[12px] md:text-[10px] px-1 py-0.5 rounded">
+        <motion.div
+          layoutId={`event-time-${event.id}`}
+          transition={{ duration: 1.2 }}
+          className="absolute top-1 right-1 bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-[12px] md:text-[10px] px-1 py-0.5 rounded"
+        >
           {event.time}
-        </div>
+        </motion.div>
       </div>
-      <h3 className="text-sm text-black font-sans">{event.title}</h3>
+      <motion.h3 
+        layoutId={`event-title-${event.id}`}
+        transition={{ duration: 1.2 }}
+        className="text-sm text-black font-sans"
+      >
+        {event.title}
+      </motion.h3>
     </motion.div>
   );
 } 
