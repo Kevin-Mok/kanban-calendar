@@ -1,53 +1,88 @@
-import React, { useRef } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { format, addDays } from 'date-fns';
+import { format, differenceInDays, startOfWeek, addDays } from 'date-fns';
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import DraggableEvent from './DraggableEvent';
-import { Event } from '../types';
+import { useWindowSize } from '@/hooks/useWindowSize';
+import { Event } from '@/types';
 
 interface DayColumnProps {
   date: Date;
   events: Event[];
-  isMobile: boolean;
-  index: number;
   onEventClick: (eventData: { event: Event; date: string }) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   handleEventMove: (eventId: string, newDate: Date) => void;
-  onDayChange: (dir: 'left' | 'right') => void;
+  onDayChange: (direction: 'left' | 'right') => void;
   isClient: boolean;
 }
 
-const DayColumn: React.FC<DayColumnProps> = ({
-  date,
-  events,
-  isMobile,
-  index,
-  onEventClick,
-  onDragStart,
+const DayColumn = ({ 
+  date, 
+  events, 
+  onDragStart, 
   onDragEnd,
+  onEventClick,
   handleEventMove,
   onDayChange,
   isClient
-}) => {
+}: DayColumnProps) => {
   const columnRef = useRef<HTMLDivElement>(null);
+  const { width } = useWindowSize();
+  const [isMobile, setIsMobile] = useState(false);
 
-  const sortedEvents = [...events].sort((a, b) => {
-    const timeA = new Date(a.time).getTime();
-    const timeB = new Date(b.time).getTime();
-    return timeA - timeB;
-  });
+  const parseTimeToMinutes = (time: string) => {
+    const [timePart, modifier] = time.split(' ');
+    let [hours, minutes] = timePart.split(':').map(Number);
 
-  const handleMove = (dir: 'up' | 'down') => {
-    // ... existing code ...
+    if (modifier === 'PM' && hours !== 12) {
+      hours += 12;
+    }
+    if (modifier === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    return hours * 60 + minutes;
   };
+
+  const sortedEvents = useMemo(() => {
+    const seenIds = new Set<string>();
+    return [...events]
+      .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time))
+      .filter(event => {
+        if (seenIds.has(event.id)) {
+          return false;
+        }
+        seenIds.add(event.id);
+        return true;
+      });
+  }, [events]);
+
+  useEffect(() => {
+    setIsMobile(width < 768);
+  }, [width]);
+
+  const dayOffset = differenceInDays(date, startOfWeek(date));
+
+  useEffect(() => {
+    const element = columnRef.current;
+    if (!element) return;
+
+    const cleanup = dropTargetForElements({
+      element,
+      getData: () => ({ date: format(date, 'yyyy-MM-dd') }),
+    });
+
+    return cleanup;
+  }, [date]);
 
   return (
     <motion.div
       ref={columnRef}
-      className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative shadow-md z-10`}
-      data-day={index}
+      className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative`}
+      data-day={dayOffset}
     >
-      <div className="font-bold mb-2 text-purple-600 text-sm font-sans">
+      <div className="font-bold mb-2 text-purple-500 text-med">
         {format(date, 'EEE, MMM d')}
       </div>
 
@@ -59,9 +94,9 @@ const DayColumn: React.FC<DayColumnProps> = ({
               key={event.id}
               event={event}
               date={format(date, 'yyyy-MM-dd')}
-              onEventClick={(eventData) => onEventClick({ event: eventData.event, date: eventData.date })}
-              onDragStart={() => onDragStart()}
-              onDragEnd={() => onDragEnd()}
+              onEventClick={onEventClick}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
               onDayChange={(dir) => {
                 onDayChange(dir);
                 const newDate = addDays(date, dir === 'left' ? -1 : 1);
