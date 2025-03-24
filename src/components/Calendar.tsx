@@ -249,10 +249,15 @@ const Calendar = () => {
               style={mobileViewStyle}
             >
               {[addDays(currentDate, -1), currentDate, addDays(currentDate, 1)].map((date, index) => (
-                <motion.div
+                <div
                   key={date.toISOString()}
                   className="w-[100vw] flex-shrink-0 h-full px-2"
-                  style={motionDivStyle}
+                  style={{
+                    transform: `translateX(${offset}px)`,
+                    transition: motionDivStyle.transition,
+                    contain: 'strict',
+                    backfaceVisibility: 'hidden'
+                  }}
                 >
                   <DayColumn
                     date={date}
@@ -265,7 +270,7 @@ const Calendar = () => {
                     onDayChange={handleDayChange}
                     isClient={isClient}
                   />
-                </motion.div>
+                </div>
               ))}
             </motion.div>
           ) : (

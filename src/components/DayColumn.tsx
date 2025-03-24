@@ -78,16 +78,29 @@ const DayColumn = ({
   }, [date]);
 
   return (
-    <motion.div
+    <div
       ref={columnRef}
-      className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative`}
+      className={`flex-1 ${isMobile ? 'w-full h-[calc(100vh-200px)] px-2' : ''} bg-gray-50 rounded-lg p-2 relative`}
       data-day={dayOffset}
+      style={{ 
+        overflowY: isMobile ? 'auto' : 'visible',
+        boxSizing: 'border-box',
+        contain: 'strict',
+        isolation: 'isolate'
+      }}
     >
-      <div className="font-bold mb-2 text-purple-500 text-med">
+      <div className="font-bold mb-2 text-purple-500 text-med sticky top-0 bg-gray-50 z-20 pb-1 shadow-sm"
+           style={{
+             contain: 'layout paint',
+             transform: 'translateZ(0)'
+           }}>
         {format(date, 'EEE, MMM d')}
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10" style={{ 
+        overflowAnchor: 'auto',
+        transform: 'translateZ(0)'
+      }}>
         {sortedEvents
           .filter(event => event && event.id)
           .map((event, index) => (
@@ -107,7 +120,7 @@ const DayColumn = ({
             />
           ))}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
