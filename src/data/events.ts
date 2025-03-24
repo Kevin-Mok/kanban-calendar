@@ -415,7 +415,7 @@ const events: EventsByDate = {
   ],
   "2025-04-02": [
     {
-      id极: "event-27",
+      id: "event-27",
       title: "Code Review",
       description: "Review recent code changes and discuss improvements.",
       imageUrl: "https://picsum.photos/1920/1080?random=53",

@@ -30,7 +30,15 @@ const DayColumn: React.FC<DayColumnProps> = ({
 }) => {
   const columnRef = useRef<HTMLDivElement>(null);
 
-  const sortedEvents = [...events].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const sortedEvents = [...events].sort((a, b) => {
+    const timeA = new Date(a.time).getTime();
+    const timeB = new Date(b.time).getTime();
+    return timeA - timeB;
+  });
+
+  const handleMove = (dir: 'up' | 'down') => {
+    // ... existing code ...
+  };
 
   return (
     <motion.div

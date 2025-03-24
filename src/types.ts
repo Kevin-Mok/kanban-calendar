@@ -4,7 +4,6 @@ export interface Event {
   time: string;
   description?: string;
   imageUrl?: string;
-  // add other properties as needed
 }
 
 export type EventsByDate = {
