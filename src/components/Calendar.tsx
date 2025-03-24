@@ -144,9 +144,9 @@ const Calendar = () => {
     onTouchMove(e);
     setOffset(swipeDelta);
     
-    if (swipeDelta < -50 && !tempDate) {
+    if (swipeDelta < -30 && !tempDate) {
       setTempDate(addDays(currentDate, 1));
-    } else if (swipeDelta > 50 && !tempDate) {
+    } else if (swipeDelta > 30 && !tempDate) {
       setTempDate(addDays(currentDate, -1));
     }
   };
@@ -156,7 +156,7 @@ const Calendar = () => {
     onTouchEnd(e);
     
     const containerWidth = isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0;
-    const targetIndex = Math.round(-offset / containerWidth);
+    const targetIndex = Math.round(-offset / (containerWidth * 0.5));
     const newDate = addDays(currentDate, targetIndex);
     
     setCurrentDate(newDate);
@@ -209,7 +209,7 @@ const Calendar = () => {
   const mobileViewStyle = {
     x: offset - (isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0),
     width: '300%',
-    transition: isSwiping ? 'none' : 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+    transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
   };
 
   const motionDivStyle = {
@@ -222,6 +222,10 @@ const Calendar = () => {
     setSelectedEvent(event);
   }, []);
 
+  const handleDayClick = useCallback((date: Date) => {
+    setCurrentDate(date);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col">
       <CalendarHeader 
@@ -229,7 +233,7 @@ const Calendar = () => {
         onPrevWeek={handlePrevWeek}
         onNextWeek={handleNextWeek}
       />
-      {isMobile && <WeekHeader currentDate={currentDate} />}
+      {isMobile && <WeekHeader currentDate={currentDate} onDayClick={handleDayClick} />}
       
       <div 
         ref={containerRef}
@@ -253,7 +257,6 @@ const Calendar = () => {
                   <DayColumn
                     date={date}
                     events={events[format(date, 'yyyy-MM-dd')] || []}
-                    isMobile={isMobile}
                     index={index}
                     onEventClick={handleEventClick}
                     onDragStart={() => setIsEventDragging(true)}
@@ -271,7 +274,6 @@ const Calendar = () => {
                 key={date.toISOString()}
                 date={date}
                 events={events[format(date, 'yyyy-MM-dd')] || []}
-                isMobile={isMobile}
                 index={index}
                 onEventClick={handleEventClick}
                 onDragStart={() => setIsEventDragging(true)}

@@ -9,7 +9,8 @@ import { Event } from '@/types';
 interface DayColumnProps {
   date: Date;
   events: Event[];
-  onEventClick: (eventData: { event: Event; date: string }) => void;
+  index: number;
+  onEventClick: ({ event, date }: { event: Event; date: string }) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   handleEventMove: (eventId: string, newDate: Date) => void;

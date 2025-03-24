@@ -4,9 +4,10 @@ import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 
 interface WeekHeaderProps {
   currentDate: Date;
+  onDayClick: (date: Date) => void;
 }
 
-const WeekHeader = ({ currentDate }: WeekHeaderProps) => {
+const WeekHeader = ({ currentDate, onDayClick }: WeekHeaderProps) => {
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentDate, { weekStartsOn: 0 });
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -22,11 +23,17 @@ const WeekHeader = ({ currentDate }: WeekHeaderProps) => {
           animate={{ backgroundColor: 'transparent' }}
           transition={{ duration: 0.3 }}
         >
-          <div className={`w-full px-2 py-2 rounded-md flex flex-col items-center gap-1 ${
-            isSameDay(day, currentDate) 
-              ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white' 
-              : 'text-purple-100'
-          }`}>
+          <div 
+            onClick={() => {
+              const dayStart = new Date(day);
+              dayStart.setHours(0, 0, 0, 0);
+              onDayClick(dayStart);
+            }}
+            className={`w-full px-2 py-2 rounded-md flex flex-col items-center gap-1 cursor-pointer ${
+              isSameDay(day, currentDate) 
+                ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white' 
+                : 'text-purple-100'
+            }`}>
             <div className="text-sm font-medium">
               {format(day, 'EEE')}
             </div>
