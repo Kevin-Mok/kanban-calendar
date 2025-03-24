@@ -43,11 +43,12 @@ export default function DraggableEvent({
         const currentX = location.current.input.clientX;
         const now = Date.now();
         
-        if (now - lastChangeTime.current > 500) {
-          if (currentX < 50) {
+        if (now - lastChangeTime.current > 1000) {
+          const edgeThreshold = 100;
+          if (currentX < edgeThreshold) {
             lastChangeTime.current = now;
             onDayChange('left');
-          } else if (currentX > screenWidth.current - 50) {
+          } else if (currentX > screenWidth.current - edgeThreshold) {
             lastChangeTime.current = now;
             onDayChange('right');
           }
@@ -67,23 +68,27 @@ export default function DraggableEvent({
   return (
     <motion.div
       ref={ref}
-      layoutId={event.id}
+      layoutId={isDragging ? event.id : undefined}
       onClick={() => !isDragging && onEventClick({ event, date })}
       className="bg-white p-4 rounded shadow-md mb-2 cursor-grab active:cursor-grabbing transition-all relative select-none"
       whileHover={{ scale: 1.01 }}
-      transition={{ duration: 1.2 }}
+      transition={{ 
+        duration: 0.3,
+        layout: { duration: 0.1 }
+      }}
       style={{
         opacity: isDragging ? 0.7 : 1,
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        touchAction: 'manipulation'
+        touchAction: 'manipulation',
+        willChange: 'transform'
       }}
     >
       <div className="relative rounded overflow-hidden mb-2">
         {event.imageUrl && (
           <motion.img 
-            layoutId={`event-image-${event.id}`}
-            transition={{ duration: 1.2 }}
+            layoutId={isDragging ? `event-image-${event.id}` : undefined}
+            transition={{ duration: 0.3 }}
             src={event.imageUrl} 
             alt={event.title}
             className="w-full h-16 md:h-12 object-cover pointer-events-none"
@@ -91,16 +96,16 @@ export default function DraggableEvent({
           />
         )}
         <motion.div
-          layoutId={`event-time-${event.id}`}
-          transition={{ duration: 1.2 }}
+          layoutId={isDragging ? `event-time-${event.id}` : undefined}
+          transition={{ duration: 0.3 }}
           className="absolute top-1 right-1 bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-[12px] md:text-[10px] px-1 py-0.5 rounded"
         >
           {event.time}
         </motion.div>
       </div>
       <motion.h3 
-        layoutId={`event-title-${event.id}`}
-        transition={{ duration: 1.2 }}
+        layoutId={isDragging ? `event-title-${event.id}` : undefined}
+        transition={{ duration: 0.3 }}
         className="text-sm text-black font-sans"
       >
         {event.title}
