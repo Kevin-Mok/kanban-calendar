@@ -62,11 +62,11 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
               className="w-full h-48 object-cover rounded-lg mb-4"
             />
           )}
-          <motion.h2 className="text-2xl font-bold mb-4">{event.title}</motion.h2>
-          <motion.p className="text-gray-600 mb-2">Date: {formattedDate}</motion.p>
-          <motion.p className="text-gray-600">Time: {event.time}</motion.p>
+          <motion.h2 className="text-lg mb-4 font-sans">{event.title}</motion.h2>
+          <motion.p className="text-gray-600 mb-2 font-sans">Date: {formattedDate}</motion.p>
+          <motion.p className="text-gray-600 font-sans">Time: {event.time}</motion.p>
           {event.description && (
-            <motion.p className="text-gray-600">
+            <motion.p className="text-gray-600 font-sans">
               Description: {event.description}
             </motion.p>
           )}

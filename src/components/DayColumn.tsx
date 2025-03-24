@@ -44,10 +44,10 @@ const DayColumn: React.FC<DayColumnProps> = ({
   return (
     <motion.div
       ref={columnRef}
-      className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative`}
+      className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative shadow-md z-10`}
       data-day={index}
     >
-      <div className="font-bold mb-2 text-black text-xl">
+      <div className="font-bold mb-2 text-purple-600 text-sm font-sans">
         {format(date, 'EEE, MMM d')}
       </div>
 

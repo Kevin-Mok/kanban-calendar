@@ -231,7 +231,7 @@ const Calendar = () => {
       
       <div 
         ref={containerRef}
-        className="flex-1 overflow-hidden"
+        className="flex-1 overflow-hidden bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -379,7 +379,7 @@ const DayColumn = ({
       className={`flex-1 ${isMobile ? 'min-w-[calc(100vw-32px)]' : ''} bg-gray-50 rounded-lg p-2 relative`}
       data-day={dayOffset}
     >
-      <div className="font-bold mb-2 text-black text-xl">
+      <div className="font-bold mb-2 text-purple-500 text-med">
         {format(date, 'EEE, MMM d')}
       </div>
 
@@ -414,24 +414,26 @@ const WeekHeader = ({ currentDate }: { currentDate: Date }) => {
   }, [currentDate]);
 
   return (
-    <div className="flex justify-between px-2 py-3 border-b">
+    <div className="flex justify-between px-2 py-3 bg-gradient-to-r from-blue-500 to-purple-500">
       {weekDays.map((day, index) => (
         <motion.div
           key={day.toISOString()}
           className="flex flex-col items-center flex-1"
           initial={false}
-          animate={{ backgroundColor: isSameDay(day, currentDate) ? '#3B82F6' : 'transparent' }}
+          animate={{ backgroundColor: 'transparent' }}
           transition={{ duration: 0.3 }}
         >
-          <div className={`text-sm font-medium ${
-            isSameDay(day, currentDate) ? 'text-white' : 'text-gray-600'
+          <div className={`w-full px-2 py-2 rounded-md flex flex-col items-center gap-1 ${
+            isSameDay(day, currentDate) 
+              ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white' 
+              : 'text-purple-100'
           }`}>
-            {format(day, 'EEE')}
-          </div>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            isSameDay(day, currentDate) ? 'bg-blue-500 text-white' : 'text-gray-900'
-          }`}>
-            {format(day, 'd')}
+            <div className="text-sm font-medium">
+              {format(day, 'EEE')}
+            </div>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center">
+              {format(day, 'd')}
+            </div>
           </div>
         </motion.div>
       ))}

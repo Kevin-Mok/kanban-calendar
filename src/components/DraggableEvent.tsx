@@ -69,7 +69,7 @@ export default function DraggableEvent({
       ref={ref}
       layoutId={event.id}
       onClick={() => !isDragging && onEventClick({ event, date })}
-      className="bg-white p-4 rounded shadow mb-2 cursor-grab active:cursor-grabbing transition-all relative select-none"
+      className="bg-white p-4 rounded shadow-md mb-2 cursor-grab active:cursor-grabbing transition-all relative select-none"
       whileHover={{ scale: 1.01 }}
       style={{
         opacity: isDragging ? 0.7 : 1,
@@ -87,11 +87,11 @@ export default function DraggableEvent({
             draggable="false"
           />
         )}
-        <div className="absolute top-1 right-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
+        <div className="absolute top-1 right-1 bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-[12px] md:text-[10px] px-1 py-0.5 rounded">
           {event.time}
         </div>
       </div>
-      <h3 className="font-medium text-black">{event.title}</h3>
+      <h3 className="text-sm text-black font-sans">{event.title}</h3>
     </motion.div>
   );
 } 
