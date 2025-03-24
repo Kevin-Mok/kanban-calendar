@@ -1,16 +1,17 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { format, addDays } from 'date-fns';
-import { DraggableEvent } from './DraggableEvent';
+import DraggableEvent from './DraggableEvent';
+import { Event } from '../types';
 
 interface DayColumnProps {
   date: Date;
   events: Event[];
   isMobile: boolean;
   index: number;
-  onEventClick: (event: Event) => void;
-  onDragStart: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
-  onDragEnd: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onEventClick: (eventData: { event: Event; date: string }) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
   handleEventMove: (eventId: string, newDate: Date) => void;
   onDayChange: (dir: 'left' | 'right') => void;
   isClient: boolean;
@@ -58,9 +59,9 @@ const DayColumn: React.FC<DayColumnProps> = ({
               key={event.id}
               event={event}
               date={format(date, 'yyyy-MM-dd')}
-              onEventClick={onEventClick}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
+              onEventClick={(eventData) => onEventClick({ event: eventData.event, date: eventData.date })}
+              onDragStart={() => onDragStart()}
+              onDragEnd={() => onDragEnd()}
               onDayChange={(dir) => {
                 onDayChange(dir);
                 const newDate = addDays(date, dir === 'left' ? -1 : 1);

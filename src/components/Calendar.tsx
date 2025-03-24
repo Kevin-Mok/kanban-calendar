@@ -287,7 +287,7 @@ const Calendar = () => {
         {selectedEvent && (
           <EventModal
             event={selectedEvent}
-            date={format(date, 'yyyy-MM-dd')}
+            date={format(currentDate, 'yyyy-MM-dd')}
             onClose={() => setSelectedEvent(null)}
           />
         )}
