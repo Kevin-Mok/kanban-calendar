@@ -231,12 +231,12 @@ const Calendar = () => {
       
       <div 
         ref={containerRef}
-        className="flex-1 overflow-hidden bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe]"
+        className={`flex-1 ${isMobile ? 'overflow-hidden' : 'overflow-y-auto'} bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe]`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className={`flex ${!isMobile && 'gap-4'} h-full p-4`}>
+        <div className={`flex ${!isMobile && 'gap-4'} ${isMobile ? 'h-full' : 'min-h-full'} p-4`}>
           {isMobile ? (
             <motion.div 
               className="flex h-full"

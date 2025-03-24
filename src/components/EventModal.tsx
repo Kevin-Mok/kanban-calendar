@@ -22,14 +22,14 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
         onClick={onClose}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="bg-white rounded-lg p-6 max-w-md w-full relative"
+          className="bg-white/95 backdrop-blur-sm rounded-lg p-8 max-w-lg w-full relative"
           onClick={(e) => e.stopPropagation()}
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
@@ -37,11 +37,11 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
+            className="absolute top-2 right-2 bg-transparent rounded-full p-1.5 text-gray-500 hover:text-gray-700 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -59,7 +59,7 @@ const EventModal = ({ event, date, onClose }: EventModalProps) => {
             <img
               src={event.imageUrl}
               alt={event.title}
-              className="w-full h-48 object-cover rounded-lg mb-4"
+              className="w-full h-56 object-cover rounded-lg mb-4 mt-2"
             />
           )}
           <motion.h2 className="text-lg mb-4 font-sans">{event.title}</motion.h2>
