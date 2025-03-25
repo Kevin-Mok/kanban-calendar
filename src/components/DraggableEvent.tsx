@@ -87,7 +87,8 @@ export default function DraggableEvent({
         userSelect: 'none',
         WebkitUserSelect: 'none',
         touchAction: 'manipulation',
-        willChange: 'transform'
+        backfaceVisibility: 'hidden',
+        transform: 'translateZ(0)'
       }}
     >
       <div className="relative rounded overflow-hidden mb-2">
@@ -113,6 +114,7 @@ export default function DraggableEvent({
         layoutId={`event-title-${event.id}`}
         transition={{ duration: 1.2 }}
         className="text-sm text-black font-sans"
+        style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
       >
         {event.title}
       </motion.h3>
