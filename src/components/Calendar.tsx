@@ -142,25 +142,36 @@ const Calendar = () => {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isEventDragging || !isSwiping) return;
     onTouchMove(e);
-    setOffset(swipeDelta);
     
-    if (swipeDelta < -30 && !tempDate) {
-      setTempDate(addDays(currentDate, 1));
-    } else if (swipeDelta > 30 && !tempDate) {
-      setTempDate(addDays(currentDate, -1));
+    if (Math.abs(swipeDelta) > 5 && Date.now() - touchStartTime.current > 50) {
+      setOffset(swipeDelta);
+      
+      if (swipeDelta < -30 && !tempDate) {
+        setTempDate(addDays(currentDate, 1));
+      } else if (swipeDelta > 30 && !tempDate) {
+        setTempDate(addDays(currentDate, -1));
+      }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchDuration = Date.now() - touchStartTime.current;
     setIsSwiping(false);
     onTouchEnd(e);
     
-    const containerWidth = isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0;
-    const targetIndex = Math.round(-offset / (containerWidth * 0.5));
-    const newDate = addDays(currentDate, targetIndex);
+    if (Math.abs(swipeDelta) > 30 && touchDuration > 100) {
+      const containerWidth = isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0;
+      const targetIndex = Math.round(offset / containerWidth);
+      const newDate = addDays(currentDate, -targetIndex);
+      
+      if (!isSameDay(newDate, currentDate)) {
+        setCurrentDate(newDate);
+      }
+    }
     
-    setCurrentDate(newDate);
-    setOffset(0);
+    requestAnimationFrame(() => {
+      setOffset(0);
+    });
     setTempDate(null);
   };
 
@@ -207,7 +218,7 @@ const Calendar = () => {
   };
 
   const mobileViewStyle = {
-    x: offset - (isClient ? (containerRef.current?.offsetWidth || window.innerWidth) : 0),
+    x: offset,
     width: '300%',
     transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
   };
@@ -225,6 +236,13 @@ const Calendar = () => {
   const handleDayClick = useCallback((date: Date) => {
     setCurrentDate(date);
   }, []);
+
+  // Fix the date array for mobile view
+  const mobileDates = useMemo(() => [
+    currentDate,
+    addDays(currentDate, 1),
+    addDays(currentDate, -1)
+  ], [currentDate]);
 
   return (
     <div className="h-screen flex flex-col">
@@ -248,12 +266,12 @@ const Calendar = () => {
               className="flex h-full"
               style={mobileViewStyle}
             >
-              {[addDays(currentDate, -1), currentDate, addDays(currentDate, 1)].map((date, index) => (
+              {mobileDates.map((date, index) => (
                 <div
                   key={date.toISOString()}
                   className="w-[100vw] flex-shrink-0 h-full px-2"
                   style={{
-                    transform: `translateX(${offset}px)`,
+                    transform: `translateX(${index === 1 ? offset : 0}px)`, // Only transform middle column
                     transition: motionDivStyle.transition,
                     contain: 'strict',
                     backfaceVisibility: 'hidden'

@@ -35,6 +35,7 @@ export default function DraggableEvent({
     const cleanup = draggable({
       element,
       onDragStart: () => {
+        console.log('DraggableEvent drag start');
         screenWidth.current = window.innerWidth;
         setIsDragging(true);
         setIsTransitioning(true);
@@ -42,21 +43,25 @@ export default function DraggableEvent({
         lastChangeTime.current = Date.now();
       },
       onDrag: ({ location }) => {
+        console.log('DraggableEvent dragging:', location.current.input.clientX);
         const currentX = location.current.input.clientX;
         const now = Date.now();
         
         if (now - lastChangeTime.current > 1000) {
           const edgeThreshold = 100;
           if (currentX < edgeThreshold) {
+            console.log('DraggableEvent day change left');
             lastChangeTime.current = now;
             onDayChange('left');
           } else if (currentX > screenWidth.current - edgeThreshold) {
+            console.log('DraggableEvent day change right');
             lastChangeTime.current = now;
             onDayChange('right');
           }
         }
       },
       onDrop: () => {
+        console.log('DraggableEvent drop');
         setIsDragging(false);
         setIsTransitioning(true);
         onDragEnd();
