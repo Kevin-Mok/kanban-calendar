@@ -83,10 +83,11 @@ const DayColumn = ({
       className={`flex-1 ${isMobile ? 'w-full h-[calc(100vh-200px)] px-2' : ''} bg-gray-50 rounded-lg p-2 relative`}
       data-day={dayOffset}
       style={{ 
-        overflowY: isMobile ? 'auto' : 'visible',
+        overflowY: isMobile ? 'scroll' : 'visible',
         boxSizing: 'border-box',
-        contain: 'strict',
-        isolation: 'isolate'
+        contain: 'none',
+        isolation: 'isolate',
+        height: isMobile ? 'calc(100vh - 200px)' : 'auto'
       }}
     >
       <div className="font-bold mb-2 text-purple-500 text-med sticky top-0 bg-gray-50 z-20 pb-1 shadow-sm"
