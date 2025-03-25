@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Calendar Kanban Board
 
-## Getting Started
+[![Live Demo](https://img.shields.io/badge/Live_Demo-View_App-blue?style=for-the-badge&logo=vercel)](https://kanban-calendar-lake.vercel.app/){:target="_blank"}
 
-First, run the development server:
+A responsive calendar application with draggable events and smooth transitions, built with Next.js, TypeScript, and Tailwind CSS. The app provides a seamless experience across both desktop and mobile devices.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
+- **Responsive Design**: 
+  - Desktop: Full week view with left/right navigation buttons
+  - Mobile: Single day view with infinite horizontal scrolling
+- **Draggable Events**: Smoothly drag and drop events between days
+- **Card-to-Detail Transition**: Elegant animation when expanding an event to full view
+- **Swipe Navigation**: Swipe left/right to navigate between days on mobile
+- **Dynamic Header**: Animated week header that updates based on current day
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Demos
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- [Desktop Demo](https://youtube.com/watch?v=HdHAB0hgIjw){:target="_blank"}
+- [Mobile Demo](https://youtube.com/shorts/cy3Gg28Oh8E){:target="_blank"}
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
 
-## Learn More
+- **Framework**: Next.js
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
 
-To learn more about Next.js, take a look at the following resources:
+## Key Challenges
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Implementing smooth drag-and-drop functionality across different screen sizes
+2. Creating seamless transitions between card and detail views
+3. Managing responsive layout changes between desktop and mobile views
+4. Implementing infinite horizontal scrolling for mobile calendar
+5. Ensuring consistent performance across devices
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Installation & Usage
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
