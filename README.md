@@ -75,6 +75,52 @@ kanban-calendar/
 └── Configuration files
 ```
 
+## Resume-ready points by variant
+
+### `general`
+- Built a responsive calendar-kanban app with draggable events and smooth card-to-detail transitions across both desktop and mobile contexts.
+- Solved cross-device interaction complexity with swipe navigation, animated headers, and performance-conscious layout behavior.
+
+### `web-dev`
+- Implemented Next.js, TypeScript, and Tailwind UI patterns for drag-and-drop scheduling and dynamic day and week navigation.
+- Built mobile infinite horizontal scrolling plus desktop week controls, delivering consistent behavior across different interaction models.
+
+### `aws`
+- Structured frontend architecture for clean deployment and predictable runtime behavior, supporting cloud-hosted delivery and reliability.
+- Applied performance and state-management discipline that translates well to cloud-monitored web applications.
+
+### `python`
+- Designed interaction flows and data contracts that transfer directly to Python-backed scheduling APIs and state services.
+- Built maintainable component boundaries that align with Python web teams integrating business logic behind modern frontends.
+
+### `aws-web-dev`
+- Combined polished frontend delivery with deployment-conscious architecture decisions suited for cloud-hosted product environments.
+- Balanced UX richness with operational simplicity, enabling reliable releases for interaction-heavy calendar workflows.
+
+### `aws-python`
+- Created UI and data boundaries that map cleanly to Python services running in cloud-managed scheduling platforms.
+- Prioritized deterministic interaction state to support backend automation and infrastructure-aware feature evolution.
+
+### `web-dev-django`
+- Implemented scheduling and form-like interaction patterns that pair naturally with Django models and calendar domain logic.
+- Built reusable frontend modules that integrate cleanly with Django APIs for production calendar applications.
+
+### `it-support`
+- Reduced usability confusion through clear transitions, navigation cues, and responsive behavior tailored to different device contexts.
+- Built predictable interaction patterns that make issue reproduction and support troubleshooting substantially easier.
+
+### `it-support-aws`
+- Designed stable runtime behavior and clear state transitions that simplify support triage in hosted environments.
+- Structured feature flows so support teams can quickly isolate UI regressions from deployment-side issues.
+
+### `sales`
+- Delivered a visually strong productivity product with clear value demonstration, improving conversion potential in demos and portfolios.
+- Combined interaction polish and practical scheduling utility to support persuasive client-facing product conversations.
+
+### `call-centre`
+- Built intuitive navigation and feedback loops that reduce repetitive clarification during high-volume user questions.
+- Emphasized clear interaction outcomes to improve communication consistency across support handoffs.
+
 ## Installation
 
 ```bash
