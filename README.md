@@ -78,48 +78,81 @@ kanban-calendar/
 ## Resume-ready points by variant
 
 ### `general`
-- Built a responsive calendar-kanban app with draggable events and smooth card-to-detail transitions across both desktop and mobile contexts.
-- Solved cross-device interaction complexity with swipe navigation, animated headers, and performance-conscious layout behavior.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `web-dev`
-- Implemented Next.js, TypeScript, and Tailwind UI patterns for drag-and-drop scheduling and dynamic day and week navigation.
-- Built mobile infinite horizontal scrolling plus desktop week controls, delivering consistent behavior across different interaction models.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `aws`
-- Structured frontend architecture for clean deployment and predictable runtime behavior, supporting cloud-hosted delivery and reliability.
-- Applied performance and state-management discipline that translates well to cloud-monitored web applications.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `python`
-- Designed interaction flows and data contracts that transfer directly to Python-backed scheduling APIs and state services.
-- Built maintainable component boundaries that align with Python web teams integrating business logic behind modern frontends.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `aws-web-dev`
-- Combined polished frontend delivery with deployment-conscious architecture decisions suited for cloud-hosted product environments.
-- Balanced UX richness with operational simplicity, enabling reliable releases for interaction-heavy calendar workflows.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `aws-python`
-- Created UI and data boundaries that map cleanly to Python services running in cloud-managed scheduling platforms.
-- Prioritized deterministic interaction state to support backend automation and infrastructure-aware feature evolution.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `web-dev-django`
-- Implemented scheduling and form-like interaction patterns that pair naturally with Django models and calendar domain logic.
-- Built reusable frontend modules that integrate cleanly with Django APIs for production calendar applications.
+- **Built a planning app** with a **7-day desktop view** and automatic mobile switch at **<768px**, so users got the right layout for their device without manual toggles.
+- **Added swipe controls** (**50px threshold**) and **keyboard shortcuts**, giving both mobile and desktop users faster ways to move through dense schedules.
+- **Improved drag-and-drop interactions** and **reduced task-move friction**, especially during rapid replanning sessions with many event changes.
+- **Kept scheduling logic reliable** during UI changes and **prevented planning regressions**, so day-to-day workflows remained stable.
+- **Focused on clear transitions** and **context-preserving interactions**, helping users understand what changed after each action and where to continue next.
 
 ### `it-support`
-- Reduced usability confusion through clear transitions, navigation cues, and responsive behavior tailored to different device contexts.
-- Built predictable interaction patterns that make issue reproduction and support troubleshooting substantially easier.
+- **Built a calendar app for desktop and mobile** with a **7-day desktop view**, helping users manage packed weekly schedules more confidently.
+- **Added swipe gestures** (**50px threshold**) and **keyboard controls**, so users could move through plans quickly without extra clicks.
+- **Improved drag-and-drop behavior** and **reduced accidental mistakes**, making task reorganization easier during busy planning windows.
+- **Designed transitions that explain each change** and **kept users oriented**, even during frequent edits.
+- **Kept behavior consistent across devices** and **reduced support questions**, making onboarding for new users easier.
 
 ### `it-support-aws`
-- Designed stable runtime behavior and clear state transitions that simplify support triage in hosted environments.
-- Structured feature flows so support teams can quickly isolate UI regressions from deployment-side issues.
+- **Built a calendar app for desktop and mobile** with a **7-day desktop view**, helping users manage packed weekly schedules more confidently.
+- **Added swipe gestures** (**50px threshold**) and **keyboard controls**, so users could move through plans quickly without extra clicks.
+- **Improved drag-and-drop behavior** and **reduced accidental mistakes**, making task reorganization easier during busy planning windows.
+- **Designed transitions that explain each change** and **kept users oriented**, even during frequent edits.
+- **Kept behavior consistent across devices** and **reduced support questions**, making onboarding for new users easier.
 
 ### `sales`
-- Delivered a visually strong productivity product with clear value demonstration, improving conversion potential in demos and portfolios.
-- Combined interaction polish and practical scheduling utility to support persuasive client-facing product conversations.
+- **Built a calendar app for desktop and mobile** with a **7-day desktop view**, helping users manage packed weekly schedules more confidently.
+- **Added swipe gestures** (**50px threshold**) and **keyboard controls**, so users could move through plans quickly without extra clicks.
+- **Improved drag-and-drop behavior** and **reduced accidental mistakes**, making task reorganization easier during busy planning windows.
+- **Designed transitions that explain each change** and **kept users oriented**, even during frequent edits.
+- **Kept behavior consistent across devices** and **reduced support questions**, making onboarding for new users easier.
 
 ### `call-centre`
-- Built intuitive navigation and feedback loops that reduce repetitive clarification during high-volume user questions.
-- Emphasized clear interaction outcomes to improve communication consistency across support handoffs.
+- **Built a calendar app for desktop and mobile** with a **7-day desktop view**, helping users manage packed weekly schedules more confidently.
+- **Added swipe gestures** (**50px threshold**) and **keyboard controls**, so users could move through plans quickly without extra clicks.
+- **Improved drag-and-drop behavior** and **reduced accidental mistakes**, making task reorganization easier during busy planning windows.
+- **Designed transitions that explain each change** and **kept users oriented**, even during frequent edits.
+- **Kept behavior consistent across devices** and **reduced support questions**, making onboarding for new users easier.
 
 ## Installation
 
