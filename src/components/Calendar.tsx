@@ -16,12 +16,14 @@ import { useSwipe } from '@/hooks/useSwipe';
 import { format, addDays, startOfWeek, differenceInDays, parseISO, isSameDay } from 'date-fns';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import EventModal from '@/components/EventModal';
-import eventsData from '@/data/events';
+import eventsData, { generateEventsForDate } from '@/data/events';
 import { Event, EventsByDate } from '@/types';
 import CalendarHeader from '@/components/CalendarHeader';
 import DraggableEvent from './DraggableEvent';
 import WeekHeader from '@/components/WeekHeader';
 import DayColumn from '@/components/DayColumn';
+
+const getDateKey = (date: Date) => format(date, 'yyyy-MM-dd');
 
 const Calendar = () => {
   const { width } = useWindowSize();
@@ -175,16 +177,6 @@ const Calendar = () => {
     setTempDate(null);
   };
 
-  useEffect(() => {
-    const todayKey = format(new Date(), 'yyyy-MM-dd');
-    if (!events[todayKey]) {
-      setEvents((prev: EventsByDate) => ({
-        ...prev,
-        [todayKey]: []
-      }));
-    }
-  }, []);
-
   const handleDayChange = useCallback((direction: 'left' | 'right') => {
     setCurrentDate(prev => {
       const newDate = addDays(prev, direction === 'left' ? -1 : 1);
@@ -244,6 +236,37 @@ const Calendar = () => {
     addDays(currentDate, -1)
   ], [currentDate]);
 
+  const weekDates = useMemo(() => getWeekDays(currentDate), [currentDate]);
+  const visibleDates = useMemo(
+    () => (isMobile ? mobileDates : weekDates),
+    [isMobile, mobileDates, weekDates]
+  );
+
+  useEffect(() => {
+    setEvents((prev: EventsByDate) => {
+      let didUpdate = false;
+      const nextEvents = { ...prev };
+
+      for (const date of visibleDates) {
+        const dateKey = getDateKey(date);
+        if (!nextEvents[dateKey]) {
+          nextEvents[dateKey] = generateEventsForDate(dateKey);
+          didUpdate = true;
+        }
+      }
+
+      return didUpdate ? nextEvents : prev;
+    });
+  }, [visibleDates]);
+
+  const getEventsForDay = useCallback(
+    (date: Date) => {
+      const dateKey = getDateKey(date);
+      return events[dateKey] || generateEventsForDate(dateKey);
+    },
+    [events]
+  );
+
   return (
     <div className="h-screen flex flex-col">
       <CalendarHeader 
@@ -279,7 +302,7 @@ const Calendar = () => {
                 >
                   <DayColumn
                     date={date}
-                    events={events[format(date, 'yyyy-MM-dd')] || []}
+                    events={getEventsForDay(date)}
                     index={index}
                     onEventClick={handleEventClick}
                     onDragStart={() => setIsEventDragging(true)}
@@ -292,11 +315,11 @@ const Calendar = () => {
               ))}
             </motion.div>
           ) : (
-            getWeekDays(currentDate).map((date, index) => (
+            weekDates.map((date, index) => (
               <DayColumn
                 key={date.toISOString()}
                 date={date}
-                events={events[format(date, 'yyyy-MM-dd')] || []}
+                events={getEventsForDay(date)}
                 index={index}
                 onEventClick={handleEventClick}
                 onDragStart={() => setIsEventDragging(true)}

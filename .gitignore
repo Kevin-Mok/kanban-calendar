@@ -43,3 +43,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local duplicate project snapshots
+/kanban-calendar-2/
+/kanban-calendar-main/
+/kanban-calendar-final/
+/kanban-calendar-final-github/
+/kanban-calendar.zip
